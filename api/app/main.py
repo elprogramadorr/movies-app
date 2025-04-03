@@ -6,4 +6,4 @@ app = FASTAPI()
 
 @app.get("/")
 def read_root():
-    return "hola mierda"
+    return "hola"
