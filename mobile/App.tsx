@@ -13,7 +13,7 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
-  View,
+  View,it
 } from 'react-native';
 
 import {
