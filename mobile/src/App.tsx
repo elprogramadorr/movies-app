@@ -9,7 +9,15 @@ import { Header } from 'react-native/Libraries/NewAppScreen';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
+  
   const [isLoading, setIsLoading] = React.useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -26,7 +34,7 @@ const App = () => {
           <Stack.Screen name="Home" component={Home} options={{headerShown : false}}/>
         )}
       </Stack.Navigator>
-    </NavigationContainer>
+    </NavigationContainer>    
   );
 };
 
