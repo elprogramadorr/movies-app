@@ -1,22 +1,15 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Text, View } from 'react-native';
 import Home from './screens/Home';
 import Splash from './screens/Splash';
-import { Header } from 'react-native/Libraries/NewAppScreen';
+import PantallaBusqueda from './screens/PantallaBusqueda';
+import { RootStackParamList } from './types';
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
-  
   const [isLoading, setIsLoading] = React.useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -29,12 +22,27 @@ const App = () => {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Splash">
         {isLoading ? (
-          <Stack.Screen name="Splash" component={Splash} options={{headerShown : false}}/>
+          <Stack.Screen
+            name="Splash"
+            component={Splash}
+            options={{ headerShown: false }}
+          />
         ) : (
-          <Stack.Screen name="Home" component={Home} options={{headerShown : false}}/>
+          <>
+            <Stack.Screen
+              name="Home"
+              component={Home}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PantallaBusqueda"
+              component={PantallaBusqueda}
+              options={{ title: 'Buscar Películas' }}
+            />
+          </>
         )}
       </Stack.Navigator>
-    </NavigationContainer>    
+    </NavigationContainer>
   );
 };
 
