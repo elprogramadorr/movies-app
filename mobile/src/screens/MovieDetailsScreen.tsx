@@ -7,7 +7,6 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
@@ -21,21 +20,14 @@ const MovieDetailsScreen = () => {
             <Text style={styles.director}>
               2019 - Dirigido por Mike Flanagan
             </Text>
-            <View
-              style={{
-                flex: 1,
-                flexDirection: 'row',
-                justifyContent: 'space-around',
-              }}>
-              <TouchableOpacity
-                style={{backgroundColor: '#778DA9', height: 23, width: 77}}>
-                <FontAwesome name="home" size={14} color="white" />
-                <Text style={{color: 'white'}}>Trailer</Text>
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity style={styles.button}>
+                <FontAwesome name="play-circle" size={14} color="white" />
+                <Text style={styles.buttonText}>Trailer</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={{backgroundColor: '#415A77', height: 23, width: 77}}>
+              <TouchableOpacity style={[styles.button, styles.likeButton]}>
                 <AntDesign name="heart" size={14} color="#E63946" />
-                <Text style={{color: 'white'}}>Te gusta</Text>
+                <Text style={styles.buttonText}>Te gusta</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -52,20 +44,15 @@ const MovieDetailsScreen = () => {
             </View>
           </View>
         </View>
-        <View>
-          <Text style={{color: '#E0E1DD', fontWeight: 600, fontSize: 14}}>
-            Sinopsis
-          </Text>
-          <Text style={{color: '#E0E1DD', fontWeight: 'light', fontSize: 14}}>
+        <View style={styles.synopsisContainer}>
+          <Text style={styles.synopsisTitle}>Sinopsis</Text>
+          <Text style={styles.synopsisText}>
             Secuela del film de culto "El resplandor" (1980) dirigido por
             Stanley Kubrick y también basado en una famosa novela de Stephen
             King. La historia transcurre algunos años después de los
             acontecimientos de "The Shining", y sigue a Danny Torrance (Ewan
             McGregor), traumatizado y con problemas de ira y alcoholismo que
-            hacen eco de los problemas de su padre Jack, que cuando sus
-            habilidades psíquicas resurgen, se contacta con una niña de nombre
-            Abra Stone, a quien debe rescatar de un grupo de viajeros que se
-            alimentan de los niños que poseen el don de "el resplandor".
+            hacen eco de los problemas de su padre Jack...
           </Text>
         </View>
       </ScrollView>
@@ -88,7 +75,28 @@ const styles = {
   },
   leftContainer: {
     flex: 0.6,
-    flexDirection: 'column',
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 10,
+  },
+  button: {
+    backgroundColor: '#778DA9',
+    height: 30,
+    width: 90,
+    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  likeButton: {
+    backgroundColor: '#415A77',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 12,
   },
   title: {
     color: 'white',
@@ -103,7 +111,6 @@ const styles = {
   },
   posterContainer: {
     flex: 0.4,
-    flexDirection: 'column',
     alignItems: 'center',
   },
   posterImage: {
@@ -116,7 +123,7 @@ const styles = {
     alignItems: 'center',
     backgroundColor: '#E7A325',
     borderRadius: 4,
-    height: 41,
+    padding: 8,
     width: 104,
   },
   ratingText: {
@@ -127,6 +134,21 @@ const styles = {
     color: 'white',
     fontWeight: 'bold',
     fontSize: 20,
+  },
+  synopsisContainer: {
+    marginTop: 20,
+  },
+  synopsisTitle: {
+    color: '#E0E1DD',
+    fontWeight: '600',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  synopsisText: {
+    color: '#E0E1DD',
+    fontWeight: '300',
+    fontSize: 14,
+    lineHeight: 20,
   },
 };
 
