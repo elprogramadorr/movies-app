@@ -1,29 +1,26 @@
 import React, {useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {Text, View, SafeAreaView} from 'react-native';
-import Home from './screens/Home';
-import Splash from './screens/Splash';
-import {Header} from 'react-native/Libraries/NewAppScreen';
 import MovieDetailsScreen from './screens/MovieDetailsScreen';
+import Splash from './screens/Splash';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   const [isLoading, setIsLoading] = React.useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
 
+  // ► Paso 1: Carga las fuentes de los iconos al iniciar la app
   useEffect(() => {
+    FontAwesome.loadFont();
+    AntDesign.loadFont();
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, []); // ◄ Array de dependencias vacío = se ejecuta solo al montar el componente
 
   return (
     <NavigationContainer>
