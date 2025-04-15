@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 import Home from './screens/Home';
 import Splash from './screens/Splash';
 import { Header } from 'react-native/Libraries/NewAppScreen';
-
+import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -31,7 +31,10 @@ const App = () => {
         {isLoading ? (
           <Stack.Screen name="Splash" component={Splash} options={{headerShown : false}}/>
         ) : (
-          <Stack.Screen name="Home" component={Home} options={{headerShown : false}}/>
+          <>
+            <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+            <Stack.Screen name="GenresScreen" component={GenresScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>    
