@@ -1,17 +1,19 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import MovieDetailsScreen from './screens/MovieDetailsScreen';
+import MovieDetails from './screens/MovieDetails';
 import Splash from './screens/Splash';
+import Home from './screens/Home';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-const Stack = createNativeStackNavigator();
+import {RootStackParamList} from './utils/types'; // ajustá la ruta si está en src/navigation/types.ts
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // ► Paso 1: Carga las fuentes de los iconos al iniciar la app
   useEffect(() => {
     FontAwesome.loadFont();
     AntDesign.loadFont();
@@ -20,7 +22,7 @@ const App = () => {
       setIsLoading(false);
     }, 2000);
     return () => clearTimeout(timer);
-  }, []); // ◄ Array de dependencias vacío = se ejecuta solo al montar el componente
+  }, []);
 
   return (
     <NavigationContainer>
@@ -32,11 +34,18 @@ const App = () => {
             options={{headerShown: false}}
           />
         ) : (
-          <Stack.Screen
-            name="MovieDetailsScreen"
-            component={MovieDetailsScreen}
-            options={{headerShown: false}}
-          />
+          <>
+            <Stack.Screen
+              name="Home"
+              component={Home}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="MovieDetails"
+              component={MovieDetails}
+              options={{headerShown: false}}
+            />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

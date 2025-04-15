@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   Text,
   SafeAreaView,
@@ -6,11 +6,30 @@ import {
   Image,
   View,
   TouchableOpacity,
+  Button,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+// import {TMDB_API_KEY} from '@env';
+import Config from 'react-native-config';
 
-const MovieDetailsScreen = () => {
+import {RouteProp, useRoute} from '@react-navigation/native';
+import {RootStackParamList} from '../utils/types';
+
+type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
+
+const MovieDetails = () => {
+  const route = useRoute<MovieDetailsRouteProp>();
+  const {movieId} = route.params;
+
+  useEffect(() => {
+    console.log('---- DEBUG ----');
+    console.log(Config);
+    // console.log('¿Config está definido?', typeof Config);
+    // console.log('Variables de entorno:', Object.keys(Config));
+    // console.log('Valor crudo:', Config.TMDB_API_KEY || 'UNDEFINED');
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -54,6 +73,18 @@ const MovieDetailsScreen = () => {
             McGregor), traumatizado y con problemas de ira y alcoholismo que
             hacen eco de los problemas de su padre Jack...
           </Text>
+        </View>
+        <Text style={{color: 'white'}}>Plataformas </Text>
+        <View style={{flex: 1, justifyContent: 'center'}}>
+          <Button
+            title="PROBAR LOG"
+            onPress={() => {
+              console.log(
+                'Usando API (la clave no se muestra):',
+                Config.TMDB_API_KEY,
+              );
+            }}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -142,14 +173,15 @@ const styles = {
     color: '#E0E1DD',
     fontWeight: '600',
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   synopsisText: {
     color: '#E0E1DD',
     fontWeight: '300',
     fontSize: 14,
     lineHeight: 20,
+    marginBottom: 25,
   },
 };
 
-export default MovieDetailsScreen;
+export default MovieDetails;

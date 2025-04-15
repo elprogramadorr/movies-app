@@ -1,8 +1,22 @@
 import React from 'react';
-import {Text} from 'react-native';
+import {View, Text, Button} from 'react-native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useNavigation} from '@react-navigation/native';
+import {RootStackParamList} from '../types';
+
+type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const Home = () => {
-  return <Text>Estoy en la casa</Text>;
+  const navigation = useNavigation<HomeNavigationProp>();
+
+  return (
+    <View style={{padding: 100}}>
+      <Button
+        title="Ver Doctor Sleep"
+        onPress={() => navigation.navigate('MovieDetails', {movieId: '501170'})}
+      />
+    </View>
+  );
 };
 
 export default Home;
