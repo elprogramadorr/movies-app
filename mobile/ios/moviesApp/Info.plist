@@ -47,5 +47,12 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+
+	<key>UIAppFonts</key>
+	<array>
+	<string>FontAwesome.ttf</string>
+	<string>AntDesign.ttf</string>
+	<!-- Añade otras fuentes si usas más librerías -->
+	</array>
 </dict>
 </plist>
