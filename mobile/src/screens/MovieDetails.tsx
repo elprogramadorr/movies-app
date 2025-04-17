@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Text,
   SafeAreaView,
@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-// import {TMDB_API_KEY} from '@env';
 import Config from 'react-native-config';
+import axios from 'axios';
 
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {RootStackParamList} from '../utils/types';
@@ -21,23 +21,69 @@ type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 const MovieDetails = () => {
   const route = useRoute<MovieDetailsRouteProp>();
   const {movieId} = route.params;
+  const [movieData, setMovieData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('---- DEBUG ----');
-    console.log(Config);
-    // console.log('¿Config está definido?', typeof Config);
-    // console.log('Variables de entorno:', Object.keys(Config));
-    // console.log('Valor crudo:', Config.TMDB_API_KEY || 'UNDEFINED');
-  }, []);
+    const fetchMovieDetails = async () => {
+      try {
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieId}`,
+          {
+            params: {
+              api_key: Config.TMDB_API_KEY,
+              language: 'es-ES',
+              append_to_response: 'credits',
+            },
+          },
+        );
+        console.log(response);
+        setMovieData(response.data);
+        console.log(movieData);
+      } catch (error) {
+        console.error('Error al obtener detalles de la película:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovieDetails();
+  }, [movieId]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{color: 'white', textAlign: 'center', marginTop: 50}}>
+          Cargando...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!movieData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={{color: 'white', textAlign: 'center', marginTop: 50}}>
+          No se encontraron datos.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  const posterUrl = `https://image.tmdb.org/t/p/original${movieData.poster_path}`;
+  const director = movieData.credits?.crew?.find(
+    (person: any) => person.job === 'Director',
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.mainContainer}>
           <View style={styles.leftContainer}>
-            <Text style={styles.title}>Doctor Sleep</Text>
+            <Text style={styles.title}>{movieData.title}</Text>
             <Text style={styles.director}>
-              2019 - Dirigido por Mike Flanagan
+              {movieData.release_date?.substring(0, 4)} - Dirigido por{' '}
+              {director?.name || 'Desconocido'}
             </Text>
             <View style={styles.buttonsContainer}>
               <TouchableOpacity style={styles.button}>
@@ -51,41 +97,20 @@ const MovieDetails = () => {
             </View>
           </View>
           <View style={styles.posterContainer}>
-            <Image
-              source={{
-                uri: 'https://image.tmdb.org/t/p/original/p69QzIBbN06aTYqRRiCOY1emNBh.jpg',
-              }}
-              style={styles.posterImage}
-            />
+            <Image source={{uri: posterUrl}} style={styles.posterImage} />
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingText}>Puntuación:</Text>
-              <Text style={styles.ratingValue}>3.5 / 5</Text>
+              <Text style={styles.ratingValue}>
+                {(movieData.vote_average / 2).toFixed(1)} / 5
+              </Text>
             </View>
           </View>
         </View>
         <View style={styles.synopsisContainer}>
           <Text style={styles.synopsisTitle}>Sinopsis</Text>
-          <Text style={styles.synopsisText}>
-            Secuela del film de culto "El resplandor" (1980) dirigido por
-            Stanley Kubrick y también basado en una famosa novela de Stephen
-            King. La historia transcurre algunos años después de los
-            acontecimientos de "The Shining", y sigue a Danny Torrance (Ewan
-            McGregor), traumatizado y con problemas de ira y alcoholismo que
-            hacen eco de los problemas de su padre Jack...
-          </Text>
+          <Text style={styles.synopsisText}>{movieData.overview}</Text>
         </View>
         <Text style={{color: 'white'}}>Plataformas </Text>
-        <View style={{flex: 1, justifyContent: 'center'}}>
-          <Button
-            title="PROBAR LOG"
-            onPress={() => {
-              console.log(
-                'Usando API (la clave no se muestra):',
-                Config.TMDB_API_KEY,
-              );
-            }}
-          />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
