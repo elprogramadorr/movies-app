@@ -46,8 +46,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-  return <Text>Estoy en la casa</Text>;
-};
+ 
 
 export default Home;
 

@@ -1,16 +1,14 @@
-import React, {useEffect} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {Text, View, SafeAreaView} from 'react-native';
-import Home from './screens/Home';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Splash from './screens/Splash';
-import {Header} from 'react-native/Libraries/NewAppScreen';
+import Home from './screens/Home';
 import MovieDetailsScreen from './screens/MovieDetailsScreen';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator();
 
 const App = () => {
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -21,19 +19,14 @@ const App = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash">
+      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
         {isLoading ? (
-          <Stack.Screen
-            name="Splash"
-            component={Splash}
-            options={{headerShown: false}}
-          />
+          <Stack.Screen name="Splash" component={Splash} />
         ) : (
-          <Stack.Screen
-            name="MovieDetailsScreen"
-            component={MovieDetailsScreen}
-            options={{headerShown: false}}
-          />
+          <>
+            <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen name="MovieDetailsScreen" component={MovieDetailsScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
