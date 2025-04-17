@@ -4,6 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';  
 import { useNavigation } from '@react-navigation/native';
 
+
 const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -45,5 +46,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+ 
 
 export default Home;
+
