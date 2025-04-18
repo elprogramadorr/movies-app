@@ -15,6 +15,7 @@ import axios from 'axios';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
+import WatchProvider from '../components/WatchProvider';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
@@ -34,7 +35,7 @@ const MovieDetails = () => {
             params: {
               api_key: Config.TMDB_API_KEY,
               language: 'es-ES',
-              append_to_response: 'credits',
+              append_to_response: 'credits,watch/providers',
             },
           },
         );
@@ -68,7 +69,6 @@ const MovieDetails = () => {
   const posterUrl = `https://image.tmdb.org/t/p/original${movieData.poster_path}`;
   const backdropUrl = `https://image.tmdb.org/t/p/original${movieData.backdrop_path}`;
 
-  console.log(movieData);
   const director = movieData.credits?.crew?.find(
     (person: any) => person.job === 'Director',
   );
@@ -78,6 +78,16 @@ const MovieDetails = () => {
       ?.map((country: any) => country.name)
       .join(', ')
       .replace('United States of America', 'United States') || 'Desconocido';
+
+  const boliviaProviders = movieData['watch/providers'].results.BO;
+  console.log('datos brutos');
+  console.log(boliviaProviders);
+  const allProviders = [
+    ...(boliviaProviders?.flatrate || []),
+    ...(boliviaProviders?.buy || []),
+    ...(boliviaProviders?.rent || []),
+  ];
+  console.log(allProviders);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -144,28 +154,29 @@ const MovieDetails = () => {
           <Text style={styles.synopsisText}>{movieData.overview}</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-          <Text style={styles.sectionTitle}>Plataformas</Text>
-        </View>
+        <Text style={styles.sectionTitle}>Plataformas</Text>
+        <ScrollView
+          horizontal
+          bounces={false}
+          overScrollMode="never"
+          style={styles.platformsSection}>
+          {/* <WatchProvider
+            link="https://www.netflix.com"
+            logoUrl="https://image.tmdb.org/t/p/w500/9ghgSC0MA082EL6HLCW3GalykFD.jpg"
+            name="Netflix"
+          /> */}
+          {allProviders.map(provider => {
+            console.log(provider);
+            return (
+              <WatchProvider
+                key={provider.provider_id}
+                link={provider.link}
+                logoUrl={`https://image.tmdb.org/t/p/w500${provider.logo_path}`}
+                name={provider.provider_name}
+              />
+            );
+          })}
+        </ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -178,6 +189,8 @@ const styles = {
   },
   scrollView: {
     padding: 16,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   errorText: {
     color: 'white',
@@ -296,6 +309,10 @@ const styles = {
     right: 0,
     bottom: 0,
     height: '40%', // Ajusta el tamaño del gradiente según lo que necesites
+  },
+  platformsSection: {
+    flexDirection: 'row',
+    marginBottom: 100,
   },
 };
 
