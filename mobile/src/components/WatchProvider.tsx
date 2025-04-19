@@ -11,6 +11,7 @@ import {
 const WatchProvider = ({link, logoUrl, name}) => {
   const YouTubeUrl = 'https://www.youtube.com/watch?v=';
   const handlePress = () => {
+    return;
     console.log(link);
     if (YouTubeUrl) {
       Linking.openURL(YouTubeUrl).catch(err => {
