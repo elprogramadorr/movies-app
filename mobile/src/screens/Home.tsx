@@ -13,7 +13,7 @@ const Home = () => {
     <View style={{padding: 100}}>
       <Button
         title="Ver Doctor Sleep"
-        onPress={() => navigation.navigate('MovieDetails', {movieId: '501170'})}
+        onPress={() => navigation.navigate('MovieDetails', {movieId: '694'})}
       />
     </View>
   );

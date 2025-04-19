@@ -9,12 +9,11 @@ import {
 } from 'react-native';
 
 const WatchProvider = ({link, logoUrl, name}) => {
+  const YouTubeUrl = 'https://www.youtube.com/watch?v=';
   const handlePress = () => {
     console.log(link);
-    console.log(logoUrl);
-    console.log(name);
-    if (link) {
-      Linking.openURL(link).catch(err => {
+    if (YouTubeUrl) {
+      Linking.openURL(YouTubeUrl).catch(err => {
         console.error('No se pudo abrir el enlace:', err);
       });
     }

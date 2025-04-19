@@ -7,6 +7,8 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
+  Linking,
+  Alert,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -23,13 +25,13 @@ const MovieDetails = () => {
   const route = useRoute<MovieDetailsRouteProp>();
   const {movieId} = route.params;
   const [movieData, setMovieData] = useState<any>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('API KEY:', Config.TMDB_API_KEY);
     const fetchMovieDetails = async () => {
       try {
-        const response = await axios.get(
+        const movieRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}`,
           {
             params: {
@@ -39,9 +41,49 @@ const MovieDetails = () => {
             },
           },
         );
-        setMovieData(response.data);
+        setMovieData(movieRes.data);
+
+        const videoRes = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieId}/videos`,
+          {
+            params: {
+              api_key: Config.TMDB_API_KEY,
+              language: 'es-ES',
+            },
+          },
+        );
+
+        const videoEN = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieId}/videos`,
+          {
+            params: {
+              api_key: Config.TMDB_API_KEY,
+            },
+          },
+        );
+
+        const videos = videoRes.data.results;
+
+        const youtubeVideo = videos.find(
+          (video: any) => video.site === 'YouTube' && video.type === 'Trailer',
+        );
+
+        if (youtubeVideo) {
+          setVideoUrl(`https://www.youtube.com/watch?v=${youtubeVideo.key}`);
+        } else {
+          const videosEn = videoEN.data.results;
+          const youtubeVideoEn = videosEn.find((v: any) => {
+            v.site === 'YouTube' && v.type === 'Trailer';
+          });
+          if (youtubeVideoEn) {
+            setVideoUrl(`https://www.youtube.com/watch?v=${youtubeVideo.key}`);
+          }
+        }
       } catch (error) {
-        console.error('Error al obtener detalles de la película:', error);
+        console.error(
+          'Error al obtener detalles de la película o el video:',
+          error,
+        );
       } finally {
         setLoading(false);
       }
@@ -80,14 +122,19 @@ const MovieDetails = () => {
       .replace('United States of America', 'United States') || 'Desconocido';
 
   const boliviaProviders = movieData['watch/providers'].results.BO;
-  console.log('datos brutos');
-  console.log(boliviaProviders);
   const allProviders = [
     ...(boliviaProviders?.flatrate || []),
     ...(boliviaProviders?.buy || []),
     ...(boliviaProviders?.rent || []),
   ];
-  console.log(allProviders);
+
+  const openTrailer = () => {
+    if (videoUrl) {
+      Linking.openURL(videoUrl);
+    } else {
+      Alert.alert('Trailer no disponible', 'No se pudo encontrar el trailer.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -96,12 +143,11 @@ const MovieDetails = () => {
           <Image source={{uri: backdropUrl}} style={styles.backdropImage} />
           <LinearGradient
             colors={['transparent', '#0D1B2A']}
-            locations={[0, 0.9]} // La transición comienza desde arriba y termina al 60%
+            locations={[0, 0.9]}
             style={styles.backdropGradient}
           />
         </View>
         <View style={styles.mainContainer}>
-          {/* Información a la izquierda */}
           <View style={styles.leftContainer}>
             <View
               style={{
@@ -126,7 +172,7 @@ const MovieDetails = () => {
             </View>
 
             <View style={styles.buttonsContainer}>
-              <TouchableOpacity style={styles.button}>
+              <TouchableOpacity style={styles.button} onPress={openTrailer}>
                 <FontAwesome name="play-circle" size={14} color="white" />
                 <Text style={styles.buttonText}>Trailer</Text>
               </TouchableOpacity>
@@ -137,7 +183,6 @@ const MovieDetails = () => {
             </View>
           </View>
 
-          {/* Póster a la derecha con margen */}
           <View style={styles.posterWrapper}>
             <Image source={{uri: posterUrl}} style={styles.posterImage} />
             <View style={styles.ratingContainer}>
@@ -160,22 +205,14 @@ const MovieDetails = () => {
           bounces={false}
           overScrollMode="never"
           style={styles.platformsSection}>
-          {/* <WatchProvider
-            link="https://www.netflix.com"
-            logoUrl="https://image.tmdb.org/t/p/w500/9ghgSC0MA082EL6HLCW3GalykFD.jpg"
-            name="Netflix"
-          /> */}
-          {allProviders.map(provider => {
-            console.log(provider);
-            return (
-              <WatchProvider
-                key={provider.provider_id}
-                link={provider.link}
-                logoUrl={`https://image.tmdb.org/t/p/w500${provider.logo_path}`}
-                name={provider.provider_name}
-              />
-            );
-          })}
+          {allProviders.map(provider => (
+            <WatchProvider
+              key={provider.provider_id}
+              link={provider.link}
+              logoUrl={`https://image.tmdb.org/t/p/w500${provider.logo_path}`}
+              name={provider.provider_name}
+            />
+          ))}
         </ScrollView>
       </ScrollView>
     </SafeAreaView>
