@@ -1,25 +1,33 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';  
-import { useNavigation } from '@react-navigation/native';
-
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+} from 'react-native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../types';
+import {useNavigation} from '@react-navigation/native';
 
 const Home = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const goToPantallaBusqueda = () => {
     navigation.navigate('PantallaBusqueda');
   };
 
   return (
-    <View style={styles.headerContainer}>
-      <View style={styles.sideSpace} />
-      <Text style={styles.title}>¡BIENVENIDO!</Text>
-      <TouchableOpacity onPress={goToPantallaBusqueda}>
-        <Text style={styles.searchText}>BUSCAR</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={{flex: 1, backgroundColor: '#0A1B2A'}}>
+      <View style={styles.headerContainer}>
+        <View style={styles.sideSpace} />
+        <Text style={styles.title}>¡BIENVENIDO!</Text>
+        <TouchableOpacity onPress={goToPantallaBusqueda}>
+          <Text style={styles.searchText}>BUSCAR</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -46,7 +54,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
- 
 
 export default Home;
-

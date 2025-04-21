@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   TextInput,
@@ -8,15 +8,16 @@ import {
   Text,
   StyleSheet,
   KeyboardAvoidingView,
+  SafeAreaView,
 } from 'react-native';
 import axios from 'axios';
-import { debounce } from 'lodash';
+import {debounce} from 'lodash';
 
 interface Movie {
   id: number;
   title: string;
   poster_path: string;
-  popularity: number; 
+  popularity: number;
 }
 
 const API_KEY = 'dc66f3e3e06fbb42ce432acf4341427f';
@@ -47,7 +48,7 @@ const SearchScreen = () => {
         .filter(
           (movie: Movie) =>
             movie.poster_path &&
-            movie.title.toLowerCase().includes(trimmedQuery)
+            movie.title.toLowerCase().includes(trimmedQuery),
         )
         .sort((a: Movie, b: Movie) => b.popularity - a.popularity); //ordena por popularidad, los más populares aparecen primero
 
@@ -59,10 +60,10 @@ const SearchScreen = () => {
 
   const searchMoviesDebounced = debounce(searchMovies, 500);
 
-  const renderItem = ({ item }: { item: Movie }) => (
+  const renderItem = ({item}: {item: Movie}) => (
     <TouchableOpacity style={styles.imageContainer}>
       <Image
-        source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
+        source={{uri: `${IMAGE_BASE_URL}${item.poster_path}`}}
         style={styles.poster}
         resizeMode="cover"
       />
@@ -71,36 +72,40 @@ const SearchScreen = () => {
   );
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <TextInput
-        placeholder="Buscar..."
-        placeholderTextColor="#aaa"
-        value={query}
-        onChangeText={(text) => {
-          setQuery(text);
-          searchMoviesDebounced(text);
-        }}
-        style={styles.input}
-      />
+    <SafeAreaView style={{flex: 1, backgroundColor: '#0A1B2A'}}>
+      <KeyboardAvoidingView style={styles.container} behavior="padding">
+        <TextInput
+          placeholder="Buscar..."
+          placeholderTextColor="#aaa"
+          value={query}
+          onChangeText={text => {
+            setQuery(text);
+            searchMoviesDebounced(text);
+          }}
+          style={styles.input}
+        />
 
-      {movies.length === 0 && query.trim().length > 0 && (
-        <Text style={styles.noResultsText}>
-          No se encontraron resultados para "{query}"
-        </Text>
-      )}
+        {movies.length === 0 && query.trim().length > 0 && (
+          <Text style={styles.noResultsText}>
+            No se encontraron resultados para "{query}"
+          </Text>
+        )}
 
-      <FlatList
-        data={movies}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-        numColumns={3}
-        contentContainerStyle={styles.grid}
-      />
+        <FlatList
+          data={movies}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderItem}
+          numColumns={3}
+          contentContainerStyle={styles.grid}
+        />
 
-      <TouchableOpacity style={styles.searchButton} onPress={() => searchMovies(query)}>
-        <Text style={styles.searchButtonText}>Buscar</Text>
-      </TouchableOpacity>
-    </KeyboardAvoidingView>
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={() => searchMovies(query)}>
+          <Text style={styles.searchButtonText}>Buscar</Text>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
