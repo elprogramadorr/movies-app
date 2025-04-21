@@ -9,6 +9,8 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 
 import {RootStackParamList} from './utils/types'; // ajustá la ruta si está en src/navigation/types.ts
 
+import PantallaBusqueda from './screens/PantallaBusqueda';
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
@@ -26,13 +28,9 @@ const App = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Splash">
+      <Stack.Navigator screenOptions={{headerShown: false}}>
         {isLoading ? (
-          <Stack.Screen
-            name="Splash"
-            component={Splash}
-            options={{headerShown: false}}
-          />
+          <Stack.Screen name="Splash" component={Splash} />
         ) : (
           <>
             <Stack.Screen
@@ -44,6 +42,11 @@ const App = () => {
               name="MovieDetails"
               component={MovieDetails}
               options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="PantallaBusqueda"
+              component={PantallaBusqueda}
+              options={{headerShown: true, title: 'Buscar Películas'}}
             />
           </>
         )}
