@@ -27,7 +27,7 @@ const MovieDetails = () => {
   const [movieData, setMovieData] = useState<any>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [liked, setLiked] = useState(false);
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
@@ -176,10 +176,23 @@ const MovieDetails = () => {
                 <FontAwesome name="play-circle" size={14} color="white" />
                 <Text style={styles.buttonText}>Trailer</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.likeButton]}>
-                <AntDesign name="heart" size={14} color="#E63946" />
-                <Text style={styles.buttonText}>Te gusta</Text>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.likeButton,
+                ]}
+                onPress={() => setLiked(!liked)}
+              >
+                <AntDesign
+                  name={liked ? 'heart' : 'hearto'}
+                  size={14}
+                  color={liked ? '#E63946' : 'white'}
+                />
+                <Text style={styles.buttonText}>
+                  {liked ? 'Te gusta' : 'Me gusta'}
+                </Text>
               </TouchableOpacity>
+
             </View>
           </View>
 
