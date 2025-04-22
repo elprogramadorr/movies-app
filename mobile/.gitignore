@@ -76,3 +76,19 @@ yarn-error.log
 
 #Projecto
 src/config/config.ts
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+
+# VSCode settings (opcional, si usás VSCode)
+.vscode/
+
+# Entornos virtuales creados por Poetry o pipenv
+.env
+

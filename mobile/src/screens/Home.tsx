@@ -1,27 +1,64 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  Button,
+} from 'react-native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../types';
+import {useNavigation} from '@react-navigation/native';
+import GenresScreen from './preferenciasIniciales/seleccionarGustos';
 
-const Home = ({ navigation }: { navigation: any }) => {
+const Home = () => {
+  
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const goToPantallaBusqueda = () => {
+    navigation.navigate('PantallaBusqueda');
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Estoy en la casa</Text>
-      <Button
-        title="Ir a Seleccionar Gustos"
-        onPress={() => navigation.navigate('GenresScreen')}
-      />
-    </View>
+    <SafeAreaView style={{flex: 1, backgroundColor: '#0A1B2A'}}>
+      <View style={styles.headerContainer}>
+        <View style={styles.sideSpace} />
+        <Text style={styles.title}>¡BIENVENIDO!</Text>
+        <TouchableOpacity onPress={goToPantallaBusqueda}>
+          <Text style={styles.searchText}>BUSCAR</Text>
+        </TouchableOpacity>
+        <Button
+          title="Ir a Seleccionar Gustos"
+          onPress={() => navigation.navigate('GenresScreen')}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#01161E',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  text: {
+  sideSpace: {
+    width: 24,
+  },
+  title: {
     fontSize: 18,
-    marginBottom: 16,
+    color: '#EFF6E0',
+    fontWeight: 'bold',
+  },
+  searchText: {
+    fontSize: 16,
+    color: '#E0E1DD',
+    fontWeight: 'bold',
   },
 });
 
