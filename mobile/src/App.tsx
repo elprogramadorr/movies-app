@@ -5,7 +5,9 @@ import Splash from './screens/Splash';
 import Home from './screens/Home';
 import MovieDetailsScreen from './screens/MovieDetailsScreen';
 import PantallaBusqueda from './screens/PantallaBusqueda';
-import { RootStackParamList } from './types'; // si estás usando tipado con TypeScript
+import { RootStackParamList } from './types'; 
+import firebase from '@react-native-firebase/app';
+import firestore from '@react-native-firebase/firestore';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

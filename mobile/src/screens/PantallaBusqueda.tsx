@@ -74,16 +74,28 @@ const SearchScreen = () => {
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#0A1B2A'}}>
       <KeyboardAvoidingView style={styles.container} behavior="padding">
-        <TextInput
-          placeholder="Buscar..."
-          placeholderTextColor="#aaa"
-          value={query}
-          onChangeText={text => {
-            setQuery(text);
-            searchMoviesDebounced(text);
-          }}
-          style={styles.input}
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            placeholder="Buscar..."
+            placeholderTextColor="#aaa"
+            value={query}
+            onChangeText={text => {
+              setQuery(text);
+              searchMoviesDebounced(text);
+            }}
+            style={styles.input}
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setQuery('');
+                setMovies([]);
+              }}
+              style={styles.clearButton}>
+              <Text style={styles.clearText}>×</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {movies.length === 0 && query.trim().length > 0 && (
           <Text style={styles.noResultsText}>
@@ -115,13 +127,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A1B2A',
     padding: 10,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#1E2D3C',
     borderRadius: 25,
-    padding: 10,
-    color: '#fff',
+    paddingHorizontal: 15,
     marginBottom: 10,
-    paddingHorizontal: 20,
+  },
+  input: {
+    flex: 1,
+    color: '#fff',
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  clearButton: {
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearText: {
+    fontSize: 22,
+    color: '#fff',
+    lineHeight: 24,
   },
   grid: {
     justifyContent: 'center',
