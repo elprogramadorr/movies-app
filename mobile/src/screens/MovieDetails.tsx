@@ -211,6 +211,7 @@ const MovieDetails = () => {
           horizontal
           bounces={false}
           overScrollMode="never"
+          showsHorizontalScrollIndicator={false}
           style={styles.platformsSection}>
           {uniqueProviders.map(provider => (
             <WatchProvider
@@ -274,26 +275,39 @@ const MovieDetails = () => {
           </View>
 
           {activeTab === 'Detalles' ? (
-            <View style={{marginLeft: '30'}}>
-              <Text style={styles.sectionTitle}>Presupuesto</Text>
-              <Text style={styles.indentedText}>
-                ${movieData.budget?.toLocaleString() || 'No disponible'}
-              </Text>
-              <Text style={styles.sectionTitle}>Ingresos</Text>
-              <Text style={styles.indentedText}>
-                ${movieData.revenue?.toLocaleString() || 'No disponible'}
-              </Text>
-              <Text style={styles.sectionTitle}>Productoras</Text>
+            <View style={{marginLeft: '20'}}>
+              <Text style={styles.sectionTitle}> Productoras</Text>
               <Text style={styles.indentedText}>
                 {movieData.production_companies
                   ?.map((company: any) => company.name)
                   .join(', ') || 'No disponible'}
               </Text>
+
+              <Text style={styles.sectionTitle}>Fecha de estreno</Text>
+              <Text style={styles.indentedText}>
+                {movieData.release_date || 'No disponible'}
+              </Text>
+
+              <Text style={styles.sectionTitle}>Géneros</Text>
+              <Text style={styles.indentedText}>
+                {movieData.genres?.map((genre: any) => genre.name).join(', ') ||
+                  'No disponible'}
+              </Text>
+
+              <Text style={styles.sectionTitle}>Presupuesto</Text>
+              <Text style={styles.indentedText}>
+                ${movieData.budget?.toLocaleString() || 'No disponible'}
+              </Text>
+
+              <Text style={styles.sectionTitle}>Ingresos</Text>
+              <Text style={styles.indentedText}>
+                ${movieData.revenue?.toLocaleString() || 'No disponible'}
+              </Text>
             </View>
           ) : (
             <View>
               <View style={styles.twoColumnGrid}>
-                {movieData.credits?.cast?.slice(0, 10).map((actor: any) => (
+                {movieData.credits?.cast?.slice(0, 200).map((actor: any) => (
                   <View key={actor.cast_id} style={styles.actorColumn}>
                     <Actor
                       name={actor.name}
@@ -480,7 +494,7 @@ const styles = {
     justifyContent: 'space-between',
   },
   actorColumn: {
-    width: '48%', // Deja un pequeño margen entre columnas
+    width: '48%',
     marginBottom: 16,
   },
 };
