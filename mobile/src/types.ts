@@ -3,6 +3,7 @@ export type RootStackParamList = {
     Home: undefined;
     PantallaBusqueda: undefined;
     GenresScreen: undefined;
+    seleccionarPeliculasGeneros: { selectedGenres: any[] };
     MovieDetailsScreen: { movieId: number };
   };
   

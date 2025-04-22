@@ -9,9 +9,9 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#EFEFEF',
         marginBottom: 16,
         textAlign: 'center',
+        color: '#EFEFEF',
     },
     text: {
         fontSize: 16,
@@ -31,16 +31,31 @@ const styles = StyleSheet.create({
         flex: 1,
         margin: 8,
         padding: 16,
-        backgroundColor: '#1B263B',
+        backgroundColor: '#007BFF',
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
     },
+    genreButtonSelected: {
+        backgroundColor: '#415A77', // Color diferente para los botones seleccionados
+    },
     genreText: {
-        color: '#EFEFEF',
-        fontSize: 14,
+        color: '#fff',
+        fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
+    },
+    nextButton: {
+        marginTop: 16,
+        padding: 16,
+        backgroundColor: '#28a745',
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    nextButtonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });
 

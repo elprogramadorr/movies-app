@@ -10,7 +10,6 @@ import {
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../types';
 import {useNavigation} from '@react-navigation/native';
-import GenresScreen from './preferenciasIniciales/seleccionarGustos';
 
 const Home = () => {
   

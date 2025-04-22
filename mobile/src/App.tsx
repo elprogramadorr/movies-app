@@ -7,6 +7,7 @@ import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 import Home from './screens/Home';
 import MovieDetailsScreen from './screens/MovieDetailsScreen';
 import PantallaBusqueda from './screens/PantallaBusqueda';
+import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
 import { RootStackParamList } from './types'; // si estás usando tipado con TypeScript
 
 const Stack = createNativeStackNavigator();
@@ -30,6 +31,7 @@ const App = () => {
           <>
             <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
             <Stack.Screen name="GenresScreen" component={GenresScreen} />
+            <Stack.Screen name="seleccionarPeliculasGeneros" component={SeleccionarPeliculasGeneros} />
             <Stack.Screen
               name="PantallaBusqueda"
               component={PantallaBusqueda}
