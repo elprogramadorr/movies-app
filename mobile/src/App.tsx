@@ -7,7 +7,7 @@ import Home from './screens/Home';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-import {RootStackParamList} from './utils/types'; // ajustá la ruta si está en src/navigation/types.ts
+import {RootStackParamList} from './types'; // ajustá la ruta si está en src/navigation/types.ts
 
 import PantallaBusqueda from './screens/PantallaBusqueda';
 
