@@ -12,6 +12,10 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import {debounce} from 'lodash';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../types';
+import Config from 'react-native-config';
 
 interface Movie {
   id: number;
@@ -20,11 +24,14 @@ interface Movie {
   popularity: number;
 }
 
-const API_KEY = 'dc66f3e3e06fbb42ce432acf4341427f';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
+type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+
 const SearchScreen = () => {
+  const navigation = useNavigation<HomeNavigationProp>();
+
   const [query, setQuery] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
 
@@ -38,7 +45,7 @@ const SearchScreen = () => {
     try {
       const response = await axios.get(`${BASE_URL}/search/movie`, {
         params: {
-          api_key: API_KEY,
+          api_key: Config.TMDB_API_KEY,
           query: trimmedQuery,
           language: 'es-ES',
         },
@@ -61,7 +68,9 @@ const SearchScreen = () => {
   const searchMoviesDebounced = debounce(searchMovies, 500);
 
   const renderItem = ({item}: {item: Movie}) => (
-    <TouchableOpacity style={styles.imageContainer}>
+    <TouchableOpacity
+      style={styles.imageContainer}
+      onPress={() => navigation.navigate('MovieDetails', {movieId: item.id})}>
       <Image
         source={{uri: `${IMAGE_BASE_URL}${item.poster_path}`}}
         style={styles.poster}

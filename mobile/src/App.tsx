@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React, {useEffect, useState} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import MovieDetails from './screens/MovieDetails';
 import Splash from './screens/Splash';
 import Home from './screens/Home';
-import MovieDetailsScreen from './screens/MovieDetailsScreen';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+
+import {RootStackParamList} from './types'; // ajustá la ruta si está en src/navigation/types.ts
+
 import PantallaBusqueda from './screens/PantallaBusqueda';
-import { RootStackParamList } from './types'; // si estás usando tipado con TypeScript
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -13,6 +17,9 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    FontAwesome.loadFont();
+    AntDesign.loadFont();
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
@@ -21,18 +28,26 @@ const App = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{headerShown: false}}>
         {isLoading ? (
           <Stack.Screen name="Splash" component={Splash} />
         ) : (
           <>
-            <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen
+              name="Home"
+              component={Home}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="MovieDetails"
+              component={MovieDetails}
+              options={{headerShown: false}}
+            />
             <Stack.Screen
               name="PantallaBusqueda"
               component={PantallaBusqueda}
-              options={{ headerShown: true, title: 'Buscar Películas' }}
+              options={{headerShown: true, title: 'Buscar Películas'}}
             />
-            <Stack.Screen name="MovieDetailsScreen" component={MovieDetailsScreen} />
           </>
         )}
       </Stack.Navigator>
