@@ -74,6 +74,8 @@ yarn-error.log
 !.yarn/sdks
 !.yarn/versions
 
+#Projecto
+src/config/config.ts
 
 # Python
 venv/

@@ -5,12 +5,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Button,
 } from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../types';
 import {useNavigation} from '@react-navigation/native';
 
 const Home = () => {
+  
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -26,6 +28,10 @@ const Home = () => {
         <TouchableOpacity onPress={goToPantallaBusqueda}>
           <Text style={styles.searchText}>BUSCAR</Text>
         </TouchableOpacity>
+        <Button
+          title="Ir a Seleccionar Gustos"
+          onPress={() => navigation.navigate('GenresScreen')}
+        />
       </View>
     </SafeAreaView>
   );
