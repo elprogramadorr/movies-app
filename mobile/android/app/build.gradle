@@ -56,9 +56,5 @@ dependencies {
         implementation jscFlavor
     }
 }
-<<<<<<< HEAD
-apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
-=======
 
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
->>>>>>> main
