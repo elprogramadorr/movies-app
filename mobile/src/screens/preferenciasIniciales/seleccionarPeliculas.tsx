@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, Button, Alert, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { fetchMoviesByGenres } from '../../services/movieGenreService';
+import styles from './seleccionarPeliculas.styles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const SeleccionarPeliculasGeneros = ({ route }: { route: any }) => {
+const SeleccionarPeliculasGeneros = ({ route, navigation }: { route: any; navigation: any }) => {
     const { selectedGenres } = route.params; // Obtén los géneros seleccionados desde los parámetros
     const [moviesByGenre, setMoviesByGenre] = useState<{ [key: number]: any[] }>({});
     const [selectedMovies, setSelectedMovies] = useState<number[]>([]); // IDs de películas seleccionadas
@@ -12,6 +13,7 @@ const SeleccionarPeliculasGeneros = ({ route }: { route: any }) => {
     // URL base para las imágenes de TMDb
     const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
+    
     useEffect(() => {
         const loadMoviesByGenre = async () => {
             try {
@@ -37,6 +39,13 @@ const SeleccionarPeliculasGeneros = ({ route }: { route: any }) => {
             // Si no está seleccionado, lo agregamos
             setSelectedMovies([...selectedMovies, movieId]);
         }
+    };
+
+    const handleFinalize = () => {
+        // Muestra los IDs seleccionados en una alerta (puedes cambiar esto según tus necesidades)
+        Alert.alert('Películas seleccionadas', `IDs: ${selectedMovies.join(', ')}`);
+        // También puedes navegar a otra pantalla o realizar alguna acción adicional
+        navigation.navigate('Home', { selectedMovies: selectedMovies });
     };
 
     if (error) {
@@ -88,62 +97,11 @@ const SeleccionarPeliculasGeneros = ({ route }: { route: any }) => {
                     />
                 </View>
             ))}
+            <View style={styles.finalizeButtonContainer}>
+                <Button title="Finalizar" onPress={handleFinalize} color="#007BFF" />
+            </View>
         </ScrollView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: '#0D1B2A',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 16,
-        textAlign: 'center',
-        color: '#EFEFEF',
-    },
-    text: {
-        fontSize: 16,
-        marginBottom: 8,
-        textAlign: 'center',
-        color: '#EFEFEF',
-    },
-    error: {
-        fontSize: 16,
-        color: 'red',
-        textAlign: 'center',
-    },
-    genreSection: {
-        marginBottom: 24,
-    },
-    genreTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: '#EFEFEF',
-    },
-    movieItem: {
-        marginRight: 16,
-        alignItems: 'center',
-        position: 'relative',
-    },
-    poster: {
-        width: 120,
-        height: 180,
-        borderRadius: 8,
-        marginBottom: 8,
-    },
-    selectedOverlay: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        borderRadius: 15,
-        padding: 5,
-    },
-});
 
 export default SeleccionarPeliculasGeneros;
