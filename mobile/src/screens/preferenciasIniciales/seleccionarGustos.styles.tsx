@@ -9,14 +9,21 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 16,
-        textAlign: 'center',
+        textAlign: 'left',
+        color: '#EFEFEF',
+    },
+    textTitle: {
+        fontSize: 16,
+        marginBottom: 8,
+        textAlign: 'left',
         color: '#EFEFEF',
     },
     text: {
         fontSize: 16,
         marginBottom: 8,
         textAlign: 'center',
+        color: '#EFEFEF',
+        padding: 5,
     },
     error: {
         fontSize: 16,
@@ -24,7 +31,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     row: {
-        justifyContent: 'space-between', // Espaciado entre los botones
+        justifyContent: 'space-between',
         marginBottom: 16,
     },
     genreButton: {
@@ -37,7 +44,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     genreButtonSelected: {
-        backgroundColor: '#415A77', // Color diferente para los botones seleccionados
+        backgroundColor: '#415A77',
     },
     genreText: {
         color: '#fff',
@@ -46,14 +53,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     nextButton: {
-        marginTop: 16,
         padding: 16,
-        backgroundColor: '#28a745',
+        backgroundColor: '#E0E1DD',
         borderRadius: 8,
         alignItems: 'center',
     },
     nextButtonText: {
-        color: '#fff',
+        color: '#0D1B2A',
         fontSize: 18,
         fontWeight: 'bold',
     },
