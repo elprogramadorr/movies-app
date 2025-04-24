@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   TextInput,
@@ -11,9 +11,9 @@ import {
   SafeAreaView,
 } from 'react-native';
 import axios from 'axios';
-import {debounce} from 'lodash';
-
-
+import { debounce } from 'lodash';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../android/app/src/config/firebaseConfig'; 
 
 interface Movie {
   id: number;
@@ -52,7 +52,7 @@ const SearchScreen = () => {
             movie.poster_path &&
             movie.title.toLowerCase().includes(trimmedQuery),
         )
-        .sort((a: Movie, b: Movie) => b.popularity - a.popularity); //ordena por popularidad, los más populares aparecen primero
+        .sort((a: Movie, b: Movie) => b.popularity - a.popularity);  //ordena por popularidad, los más populares aparecen primero
 
       setMovies(filteredResults);
     } catch (error) {
@@ -62,10 +62,25 @@ const SearchScreen = () => {
 
   const searchMoviesDebounced = debounce(searchMovies, 500);
 
-  const renderItem = ({item}: {item: Movie}) => (
+  const saveSearchToFirebase = async (searchTerm: string) => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+
+    try {
+      await addDoc(collection(db, 'busqueda'), {
+        busqueda: trimmed,
+        fecha: serverTimestamp(),
+      });
+      console.log('Guardado en Firebase:', trimmed);
+    } catch (error) {
+      console.error('Error al guardar en Firebase:', error);
+    }
+  };
+
+  const renderItem = ({ item }: { item: Movie }) => (
     <TouchableOpacity style={styles.imageContainer}>
       <Image
-        source={{uri: `${IMAGE_BASE_URL}${item.poster_path}`}}
+        source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
         style={styles.poster}
         resizeMode="cover"
       />
@@ -74,7 +89,7 @@ const SearchScreen = () => {
   );
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#0A1B2A'}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <KeyboardAvoidingView style={styles.container} behavior="padding">
         <View style={styles.inputWrapper}>
           <TextInput
@@ -85,7 +100,12 @@ const SearchScreen = () => {
               setQuery(text);
               searchMoviesDebounced(text);
             }}
+            onSubmitEditing={() => {
+              searchMovies(query);
+              saveSearchToFirebase(query);
+            }}
             style={styles.input}
+            returnKeyType="search"
           />
           {query.length > 0 && (
             <TouchableOpacity
@@ -171,18 +191,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 10,
     fontSize: 14,
-  },
-  searchButton: {
-    backgroundColor: '#EFF6E0',
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  searchButtonText: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 });
 
