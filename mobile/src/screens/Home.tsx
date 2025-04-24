@@ -84,7 +84,13 @@ const Home = () => {
                           source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
                           style={styles.poster}
                       />
-                      <Text style={styles.movieTitle}>{item.title}</Text>
+                      <Text
+                          style={styles.movieTitle}
+                          numberOfLines={1} // Limita a una línea
+                          ellipsizeMode="tail" // Agrega puntos suspensivos al final si no cabe
+                      >
+                          {item.title}
+                      </Text>
                       <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
                   </View>
               </TouchableOpacity>
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
     width: 24,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#EFF6E0',
     fontWeight: 'bold',
   },
@@ -122,12 +128,12 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   movieItem: {
-    flex: 1, // Asegura que los elementos ocupen el mismo espacio
-    margin: 8, // Espaciado entre los elementos
+    flex: 1,
+    margin: 8, 
     alignItems: 'center',
   },
   poster: {
-    width: 150, // Ajusta el tamaño del póster según sea necesario
+    width: 150, 
     height: 225,
     borderRadius: 8,
     marginBottom: 8,
@@ -137,6 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
+    width: 150,
   },
   movieRating: {
     color: '#FFD700', // Color dorado para la estrella

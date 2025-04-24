@@ -13,20 +13,20 @@ const styles = StyleSheet.create({
         color: '#EFEFEF',
     },
     textTitle: {
-        fontSize: 16,
+        fontSize: 14,
         marginBottom: 8,
         textAlign: 'left',
         color: '#EFEFEF',
     },
     text: {
-        fontSize: 16,
+        fontSize: 14,
         marginBottom: 8,
         textAlign: 'center',
         color: '#EFEFEF',
         padding: 5,
     },
     error: {
-        fontSize: 16,
+        fontSize: 14,
         color: 'red',
         textAlign: 'center',
     },

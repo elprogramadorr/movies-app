@@ -13,13 +13,13 @@ const styles = StyleSheet.create({
         color: '#EFEFEF',
     },
     textTitle: {
-        fontSize: 16,
+        fontSize: 14,
         marginBottom: 8,
         textAlign: 'left',
         color: '#EFEFEF',
     },
     text: {
-        fontSize: 16,
+        fontSize: 12,
         marginBottom: 8,
         textAlign: 'center',
         color: '#EFEFEF',
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     genreTitle: {
-        fontSize: 20,
+        fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 8,
         color: '#EFEFEF',
