@@ -13,6 +13,8 @@ import {
 import axios from 'axios';
 import {debounce} from 'lodash';
 
+
+
 interface Movie {
   id: number;
   title: string;
@@ -110,12 +112,6 @@ const SearchScreen = () => {
           numColumns={3}
           contentContainerStyle={styles.grid}
         />
-
-        <TouchableOpacity
-          style={styles.searchButton}
-          onPress={() => searchMovies(query)}>
-          <Text style={styles.searchButtonText}>Buscar</Text>
-        </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
