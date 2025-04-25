@@ -13,7 +13,8 @@ import {
 import axios from 'axios';
 import { debounce } from 'lodash';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../android/app/src/config/firebaseConfig'; 
+import { db } from '../../android/app/src/config/firebaseConfig';
+import HistorialBusqueda from '../components/HistorialBusqueda';
 
 interface Movie {
   id: number;
@@ -52,7 +53,7 @@ const SearchScreen = () => {
             movie.poster_path &&
             movie.title.toLowerCase().includes(trimmedQuery),
         )
-        .sort((a: Movie, b: Movie) => b.popularity - a.popularity);  //ordena por popularidad, los más populares aparecen primero
+        .sort((a: Movie, b: Movie) => b.popularity - a.popularity); //ordena por popularidad, los más populares aparecen primero
 
       setMovies(filteredResults);
     } catch (error) {
@@ -118,6 +119,16 @@ const SearchScreen = () => {
             </TouchableOpacity>
           )}
         </View>
+
+        {query.length === 0 && (
+          <HistorialBusqueda
+            historial={[]}
+            onItemPress={item => {
+              setQuery(item);
+              searchMovies(item);
+            }}
+          />
+        )}
 
         {movies.length === 0 && query.trim().length > 0 && (
           <Text style={styles.noResultsText}>
