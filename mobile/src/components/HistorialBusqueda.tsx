@@ -5,8 +5,16 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  Alert,
 } from 'react-native';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  deleteDoc,
+  where,
+} from 'firebase/firestore';
 import { db } from '../../android/app/src/config/firebaseConfig';
 
 interface Props {
@@ -35,12 +43,46 @@ const HistorialBusqueda: React.FC<Props> = ({ onItemPress }) => {
     }
   };
 
+  const eliminarBusqueda = async (busqueda: string) => {
+    try {
+      const q = query(collection(db, 'busqueda'), where('busqueda', '==', busqueda));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+
+      cargarHistorial(); // recarga las búsquedas después de eliminar
+    } catch (error) {
+      console.error('Error eliminando búsqueda:', error);
+    }
+  };
+
+  const confirmarEliminacion = (item: string) => {
+    Alert.alert(
+      '¿Quitar del historial de búsqueda?',
+      `"${item}" se eliminará del historial.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => eliminarBusqueda(item),
+        },
+      ]
+    );
+  };
+
   useEffect(() => {
     cargarHistorial();
   }, []);
 
   const renderItem = ({ item }: { item: string }) => (
-    <TouchableOpacity style={styles.item} onPress={() => onItemPress(item)}>
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => onItemPress(item)}
+      onLongPress={() => confirmarEliminacion(item)}
+    >
       <Text style={styles.text}>{item}</Text>
     </TouchableOpacity>
   );
