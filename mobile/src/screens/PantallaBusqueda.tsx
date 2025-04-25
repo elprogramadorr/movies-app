@@ -125,6 +125,7 @@ const SearchScreen = () => {
             onItemPress={item => {
               setQuery(item);
               searchMovies(item);
+              saveSearchToFirebase(item); 
             }}
           />
         )}
