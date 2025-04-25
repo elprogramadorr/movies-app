@@ -1,7 +1,9 @@
 export type RootStackParamList = {
     Splash: undefined;
-    Home: undefined;
+    Home: { selectedMovies: number[] };
     PantallaBusqueda: undefined;
-    MovieDetailsScreen: { movieId: number };
+    GenresScreen: undefined;
+    seleccionarPeliculasGeneros: { selectedGenres: any[] };
+    MovieDetails: { movieId: number };
   };
   

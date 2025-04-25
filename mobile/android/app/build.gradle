@@ -4,9 +4,6 @@ apply plugin: "com.facebook.react"
 
 
 react {
-
-
-    /* Autolinking */
     autolinkLibrariesWithApp()
 }
 
@@ -61,4 +58,5 @@ dependencies {
     }
 }
 apply plugin: 'com.google.gms.google-services' 
+
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
