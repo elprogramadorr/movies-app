@@ -122,7 +122,6 @@ const SearchScreen = () => {
 
         {query.length === 0 && (
           <HistorialBusqueda
-            historial={[]}
             onItemPress={item => {
               setQuery(item);
               searchMovies(item);
