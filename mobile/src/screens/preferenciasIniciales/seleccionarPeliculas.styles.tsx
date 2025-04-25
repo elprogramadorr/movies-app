@@ -9,15 +9,21 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 16,
-        textAlign: 'center',
+        textAlign: 'left',
+        color: '#EFEFEF',
+    },
+    textTitle: {
+        fontSize: 14,
+        marginBottom: 8,
+        textAlign: 'left',
         color: '#EFEFEF',
     },
     text: {
-        fontSize: 16,
+        fontSize: 12,
         marginBottom: 8,
         textAlign: 'center',
         color: '#EFEFEF',
+        padding:5,
     },
     error: {
         fontSize: 16,
@@ -28,7 +34,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     genreTitle: {
-        fontSize: 20,
+        fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 8,
         color: '#EFEFEF',
@@ -53,8 +59,25 @@ const styles = StyleSheet.create({
         padding: 5,
     },
     finalizeButtonContainer: {
-        marginTop: 20,
         alignItems: 'center',
+    },
+
+    finalizeButton:{
+        padding: 16,
+        backgroundColor: '#E0E1DD',
+        borderRadius: 8,
+        alignItems: 'center',
+        width: '100%',
+    },
+
+    finalizeButtonText: {
+        color: '#0D1B2A',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+
+    scrollView: {
+        flex: 1,
     },
 });
 

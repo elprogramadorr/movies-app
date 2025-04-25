@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Button } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { fetchGenres } from '../../services/genresServices';
 import styles from './seleccionarGustos.styles';
 import { useNavigation } from '@react-navigation/native';
@@ -29,15 +29,13 @@ const GenresScreen = () => {
         if (selectedGenres.includes(id)) {
             // Si ya está seleccionado, lo deseleccionamos
             setSelectedGenres(selectedGenres.filter((genreId) => genreId !== id));
-        } else {
-            // Si no está seleccionado, lo agregamos
+        } else if (selectedGenres.length < 3) {
+            // Si no está seleccionado y no se ha alcanzado el máximo, lo agregamos
             setSelectedGenres([...selectedGenres, id]);
+        } else {
+            // Si ya hay 3 géneros seleccionados, no permitimos agregar más
+            Alert.alert('Límite alcanzado', 'Solo puedes seleccionar hasta 3 géneros.');
         }
-    };
-    const handleNext = () => {
-        console.log('Géneros seleccionados:', selectedGenres); // Muestra los géneros seleccionados en la consola
-        const selectedGenresData = genres.filter((genre) => selectedGenres.includes(genre.id));
-        navigation.navigate('seleccionarPeliculasGeneros', { selectedGenres: selectedGenresData });
     };
 
     if (error) {
@@ -71,9 +69,20 @@ const GenresScreen = () => {
         );
     };
 
+    const handleNext = () => {
+        if (selectedGenres.length < 3) {
+            Alert.alert('Debes seleccionar al menos 3 géneros.');
+            return;
+        }
+        console.log('Géneros seleccionados:', selectedGenres); // Muestra los géneros seleccionados en la consola
+        const selectedGenresData = genres.filter((genre) => selectedGenres.includes(genre.id));
+        navigation.navigate('seleccionarPeliculasGeneros', { selectedGenres: selectedGenresData });
+    };
+
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Selecciona tus géneros favoritos</Text>
+            <Text style={styles.title}>Preferencias iniciales</Text>
+            <Text style={styles.textTitle}>Selecciona tus géneros favoritos</Text>
             <FlatList
                 data={genres}
                 renderItem={renderGenre}
@@ -81,6 +90,7 @@ const GenresScreen = () => {
                 numColumns={2} // Muestra dos botones por fila
                 columnWrapperStyle={styles.row} // Estilo para las filas
             />
+            <Text style={styles.text}>Selecciona 3 generos</Text>
             <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
                 <Text style={styles.nextButtonText}>Siguiente</Text>
             </TouchableOpacity>
