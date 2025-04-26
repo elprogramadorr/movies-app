@@ -55,7 +55,7 @@ const App = () => {
             <Stack.Screen
               name="PantallaBusqueda"
               component={PantallaBusqueda}
-              options={{headerShown: true, title: 'Buscar Películas'}}
+              options={{headerShown: false, title: 'Buscar Películas'}}
             />
           </>
         )}
