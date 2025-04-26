@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   TextInput,
@@ -11,11 +11,10 @@ import {
   SafeAreaView,
 } from 'react-native';
 import axios from 'axios';
-import {debounce} from 'lodash';
-import {useNavigation} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../types';
-import Config from 'react-native-config';
+import { debounce } from 'lodash';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../android/app/src/config/firebaseConfig';
+import HistorialBusqueda from '../components/HistorialBusqueda';
 
 interface Movie {
   id: number;
@@ -24,14 +23,11 @@ interface Movie {
   popularity: number;
 }
 
+const API_KEY = 'dc66f3e3e06fbb42ce432acf4341427f';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
-type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
-
 const SearchScreen = () => {
-  const navigation = useNavigation<HomeNavigationProp>();
-
   const [query, setQuery] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
 
@@ -45,7 +41,7 @@ const SearchScreen = () => {
     try {
       const response = await axios.get(`${BASE_URL}/search/movie`, {
         params: {
-          api_key: Config.TMDB_API_KEY,
+          api_key: API_KEY,
           query: trimmedQuery,
           language: 'es-ES',
         },
@@ -67,12 +63,25 @@ const SearchScreen = () => {
 
   const searchMoviesDebounced = debounce(searchMovies, 500);
 
-  const renderItem = ({item}: {item: Movie}) => (
-    <TouchableOpacity
-      style={styles.imageContainer}
-      onPress={() => navigation.navigate('MovieDetails', {movieId: item.id})}>
+  const saveSearchToFirebase = async (searchTerm: string) => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+
+    try {
+      await addDoc(collection(db, 'busqueda'), {
+        busqueda: trimmed,
+        fecha: serverTimestamp(),
+      });
+      console.log('Guardado en Firebase:', trimmed);
+    } catch (error) {
+      console.error('Error al guardar en Firebase:', error);
+    }
+  };
+
+  const renderItem = ({ item }: { item: Movie }) => (
+    <TouchableOpacity style={styles.imageContainer}>
       <Image
-        source={{uri: `${IMAGE_BASE_URL}${item.poster_path}`}}
+        source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
         style={styles.poster}
         resizeMode="cover"
       />
@@ -81,18 +90,45 @@ const SearchScreen = () => {
   );
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#0A1B2A'}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <KeyboardAvoidingView style={styles.container} behavior="padding">
-        <TextInput
-          placeholder="Buscar..."
-          placeholderTextColor="#aaa"
-          value={query}
-          onChangeText={text => {
-            setQuery(text);
-            searchMoviesDebounced(text);
-          }}
-          style={styles.input}
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            placeholder="Buscar..."
+            placeholderTextColor="#aaa"
+            value={query}
+            onChangeText={text => {
+              setQuery(text);
+              searchMoviesDebounced(text);
+            }}
+            onSubmitEditing={() => {
+              searchMovies(query);
+              saveSearchToFirebase(query);
+            }}
+            style={styles.input}
+            returnKeyType="search"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                setQuery('');
+                setMovies([]);
+              }}
+              style={styles.clearButton}>
+              <Text style={styles.clearText}>×</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {query.length === 0 && (
+          <HistorialBusqueda
+            onItemPress={item => {
+              setQuery(item);
+              searchMovies(item);
+              saveSearchToFirebase(item); 
+            }}
+          />
+        )}
 
         {movies.length === 0 && query.trim().length > 0 && (
           <Text style={styles.noResultsText}>
@@ -107,12 +143,6 @@ const SearchScreen = () => {
           numColumns={3}
           contentContainerStyle={styles.grid}
         />
-
-        <TouchableOpacity
-          style={styles.searchButton}
-          onPress={() => searchMovies(query)}>
-          <Text style={styles.searchButtonText}>Buscar</Text>
-        </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -124,13 +154,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A1B2A',
     padding: 10,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#1E2D3C',
     borderRadius: 25,
-    padding: 10,
-    color: '#fff',
+    paddingHorizontal: 15,
     marginBottom: 10,
-    paddingHorizontal: 20,
+  },
+  input: {
+    flex: 1,
+    color: '#fff',
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  clearButton: {
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearText: {
+    fontSize: 22,
+    color: '#fff',
+    lineHeight: 24,
   },
   grid: {
     justifyContent: 'center',
@@ -156,18 +202,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 10,
     fontSize: 14,
-  },
-  searchButton: {
-    backgroundColor: '#EFF6E0',
-    borderRadius: 10,
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  searchButtonText: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 });
 
