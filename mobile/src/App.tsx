@@ -39,13 +39,12 @@ const App = () => {
           <Stack.Screen name="Splash" component={Splash} />
         ) : (
           <>
-            <Stack.Screen name="Home" component={Home} />
-            <Stack.Screen name="MovieDetailsScreen" component={MovieDetailsScreen} />
             <Stack.Screen
               name="Home"
               component={Home}
               options={{headerShown: false}}
             />
+            <Stack.Screen name="MovieDetailsScreen" component={MovieDetailsScreen} />
             <Stack.Screen name="GenresScreen" component={GenresScreen} />
             <Stack.Screen name="seleccionarPeliculasGeneros" component={SeleccionarPeliculasGeneros} />
             <Stack.Screen
