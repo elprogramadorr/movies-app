@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "70938127122",
+    "project_id": "holo-3f15e",
+    "storage_bucket": "holo-3f15e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:70938127122:android:52dfa790032c8001fbe1cb",
+        "android_client_info": {
+          "package_name": "com.moviesapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4KR6bBqM5s9tMmfutsUlxgoikC5s-Kxw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
