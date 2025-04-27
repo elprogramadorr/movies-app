@@ -29,6 +29,7 @@ const MovieDetails = () => {
   const [movieData, setMovieData] = useState<any>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>('Detalles');
   const [liked, setLiked] = useState(false);
   useEffect(() => {
     const fetchMovieDetails = async () => {
