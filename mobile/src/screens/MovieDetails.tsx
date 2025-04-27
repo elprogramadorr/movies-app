@@ -181,7 +181,17 @@ const MovieDetails = () => {
                   styles.button,
                   styles.likeButton,
                 ]}
-                onPress={() => setLiked(!liked)}
+                onPress={() => {
+                  const newStatus = !liked;
+                  setLiked(newStatus);
+                  Alert.alert(
+                    newStatus ? 'Agregado a Favoritos' : 'Eliminado de Favoritos',
+                    newStatus
+                      ? 'Se agregó a tus favoritos.'
+                      : 'Se eliminó de tus favoritos.',
+                    [{ text: 'OK' }],
+                  );
+                }}
               >
                 <AntDesign
                   name={liked ? 'heart' : 'hearto'}
@@ -192,7 +202,6 @@ const MovieDetails = () => {
                   {liked ? 'Te gusta' : 'Me gusta'}
                 </Text>
               </TouchableOpacity>
-
             </View>
           </View>
 
