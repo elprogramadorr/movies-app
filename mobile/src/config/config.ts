@@ -1,0 +1,6 @@
+const CONFIG = {
+    API_BASE_URL: 'https://api.themoviedb.org/3',
+    API_KEY: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYTZhOGU3MDk3NWFlMjZiOGRhMjg4ZDRkYTIwYjQ0ZSIsIm5iZiI6MTc0Mzg5NDExNC4xNjYwMDAxLCJzdWIiOiI2N2YxYjY2MmVkZGVjMjhiMDNhZDNhOGMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.69DTQqGK7B0VuMZ3TkjfdJZ9OcJIMtPMIRtIig5UlRg',
+};
+
+export default CONFIG;

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  FlatList,
 } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -18,6 +19,7 @@ import {RouteProp, useRoute} from '@react-navigation/native';
 import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
+import Actor from '../components/Actor';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
@@ -136,6 +138,10 @@ const MovieDetails = () => {
     }
   };
 
+  const uniqueProviders = Array.from(
+    new Map(allProviders.map(p => [p.provider_id, p])).values(),
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -226,8 +232,9 @@ const MovieDetails = () => {
           horizontal
           bounces={false}
           overScrollMode="never"
+          showsHorizontalScrollIndicator={false}
           style={styles.platformsSection}>
-          {allProviders.map(provider => (
+          {uniqueProviders.map(provider => (
             <WatchProvider
               key={provider.provider_id}
               link={provider.link}
@@ -236,6 +243,108 @@ const MovieDetails = () => {
             />
           ))}
         </ScrollView>
+        <View style={{marginTop: 0}}>
+          <View style={{flexDirection: 'row', marginBottom: 30}}>
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                alignItems: 'center',
+              }}
+              onPress={() => setActiveTab('Detalles')}>
+              <Text
+                style={{
+                  color: activeTab == 'Detalles' ? '#E7A325' : '#E0E1DD',
+                  fontSize: 14,
+                  fontWeight: activeTab == 'Detalles' ? '600' : 'normal',
+                  paddingVertical: 10,
+                }}>
+                Detalles
+              </Text>
+              <View
+                style={{
+                  height: 2,
+                  width: '90%',
+                  backgroundColor:
+                    activeTab === 'Detalles' ? '#E7A325' : 'transparent',
+                }}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                alignItems: 'center',
+              }}
+              onPress={() => setActiveTab('Elenco')}>
+              <Text
+                style={{
+                  color: activeTab == 'Elenco' ? '#E7A325' : '#E0E1DD',
+                  fontWeight: activeTab == 'Elenco' ? '600' : 'normal',
+                  paddingVertical: 10,
+                }}>
+                Elenco
+              </Text>
+              <View
+                style={{
+                  height: 2,
+                  width: '90%',
+                  backgroundColor:
+                    activeTab === 'Elenco' ? '#E7A325' : 'transparent',
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {activeTab === 'Detalles' ? (
+            <View style={{marginLeft: '20'}}>
+              <Text style={styles.sectionTitle}> Productoras</Text>
+              <Text style={styles.indentedText}>
+                {movieData.production_companies
+                  ?.map((company: any) => company.name)
+                  .join(', ') || 'No disponible'}
+              </Text>
+
+              <Text style={styles.sectionTitle}>Fecha de estreno</Text>
+              <Text style={styles.indentedText}>
+                {movieData.release_date || 'No disponible'}
+              </Text>
+
+              <Text style={styles.sectionTitle}>Géneros</Text>
+              <Text style={styles.indentedText}>
+                {movieData.genres?.map((genre: any) => genre.name).join(', ') ||
+                  'No disponible'}
+              </Text>
+
+              <Text style={styles.sectionTitle}>Presupuesto</Text>
+              <Text style={styles.indentedText}>
+                ${movieData.budget?.toLocaleString() || 'No disponible'}
+              </Text>
+
+              <Text style={styles.sectionTitle}>Ingresos</Text>
+              <Text style={styles.indentedText}>
+                ${movieData.revenue?.toLocaleString() || 'No disponible'}
+              </Text>
+            </View>
+          ) : (
+            <View>
+              <View style={styles.twoColumnGrid}>
+                {movieData.credits?.cast?.slice(0, 200).map((actor: any) => (
+                  <View key={actor.cast_id} style={styles.actorColumn}>
+                    <Actor
+                      name={actor.name}
+                      photoUrl={
+                        actor.profile_path
+                          ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
+                          : null
+                      }
+                      role={actor.character}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -268,9 +377,8 @@ const styles = {
   },
   posterWrapper: {
     flex: 0.3,
-    alignItems: 'center', // <--- CAMBIO AQUÍ
+    alignItems: 'center',
   },
-
   posterImage: {
     width: '100%',
     height: 140,
@@ -351,7 +459,7 @@ const styles = {
   },
   backdropContainer: {
     position: 'relative',
-    width: '100% + 32px', // Compensa el padding del ScrollView (16px a cada lado)
+    width: '100% + 32px',
     height: 220,
     marginBottom: -35,
     marginLeft: -16,
@@ -367,11 +475,48 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    height: '40%', // Ajusta el tamaño del gradiente según lo que necesites
+    height: '40%',
   },
   platformsSection: {
     flexDirection: 'row',
-    marginBottom: 100,
+    marginBottom: 20,
+  },
+  indentedText: {
+    color: 'white',
+    paddingLeft: '30',
+    paddingBottom: '8',
+  },
+  actorCard: {
+    width: 120,
+    marginRight: 15,
+    alignItems: 'center',
+  },
+  actorImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 8,
+  },
+  actorName: {
+    color: '#E0E1DD',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 12,
+  },
+  actorCharacter: {
+    color: '#778DA9',
+    textAlign: 'center',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  twoColumnGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actorColumn: {
+    width: '48%',
+    marginBottom: 16,
   },
 };
 
