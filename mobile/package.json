@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-community/netinfo": "^11.4.1",
     "@react-native-firebase/app": "^21.14.0",
     "@react-native-firebase/firestore": "^21.14.0",
     "@react-navigation/native": "^7.1.6",
