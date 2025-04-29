@@ -15,6 +15,7 @@ import { debounce } from 'lodash';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../android/app/src/config/firebaseConfig';
 import HistorialBusqueda from '../components/HistorialBusqueda';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface Movie {
   id: number;
@@ -93,6 +94,12 @@ const SearchScreen = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <KeyboardAvoidingView style={styles.container} behavior="padding">
         <View style={styles.inputWrapper}>
+          <Icon
+            name="search"
+            size={20}
+            color="#aaa"
+            style={styles.searchIcon}
+          />
           <TextInput
             placeholder="Buscar..."
             placeholderTextColor="#aaa"
@@ -125,7 +132,7 @@ const SearchScreen = () => {
             onItemPress={item => {
               setQuery(item);
               searchMovies(item);
-              saveSearchToFirebase(item); 
+              saveSearchToFirebase(item);
             }}
           />
         )}
@@ -161,6 +168,9 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 15,
     marginBottom: 10,
+  },
+  searchIcon: {
+    marginRight: 10,
   },
   input: {
     flex: 1,
