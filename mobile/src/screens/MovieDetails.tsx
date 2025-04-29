@@ -21,8 +21,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
 import { ToastAndroid } from 'react-native';
+import { setDoc, doc, deleteDoc } from "firebase/firestore";
+import { db } from "../../android/app/src/config/firebaseConfig";
+import { Timestamp } from "firebase/firestore";
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
+
 
 const MovieDetails = () => {
   const route = useRoute<MovieDetailsRouteProp>();
@@ -139,6 +143,8 @@ const MovieDetails = () => {
       Alert.alert('Trailer no disponible', 'No se pudo encontrar el trailer.');
     }
   };
+  const docRef = doc(db, "me_gusta", movieId.toString());
+
 
   const uniqueProviders = Array.from(
     new Map(allProviders.map(p => [p.provider_id, p])).values(),
@@ -189,16 +195,29 @@ const MovieDetails = () => {
                   styles.button,
                   styles.likeButton,
                 ]}
-                onPress={() => {
+                onPress={async () => {
                   const newStatus = !liked;
                   setLiked(newStatus);
-                  ToastAndroid.show(
-                    newStatus
-                      ? 'Se agregó a tus favoritos. ❤️'
-                      : 'Se eliminó de tus favoritos. ❌',
-                    ToastAndroid.SHORT
-                  );
-                }}
+                
+                  try {
+                    const docRef = doc(db, "me_gusta", movieId.toString());
+                
+                    if (newStatus) {
+                      await setDoc(docRef, {
+                        like: true,
+                        id: movieId,
+                        nombre: movieData.title,
+                        fechaLike: Timestamp.now(),
+                      });
+                      ToastAndroid.show('Se agregó a tus favoritos. ❤️', ToastAndroid.SHORT);
+                    } else {
+                      await deleteDoc(docRef);
+                      ToastAndroid.show('Se eliminó de tus favoritos. ❌', ToastAndroid.SHORT);
+                    }
+                  } catch (error) {
+                    console.error("Error al actualizar favoritos:", error);
+                  }
+                }}                
               >
                 <AntDesign
                   name={liked ? 'heart' : 'hearto'}
