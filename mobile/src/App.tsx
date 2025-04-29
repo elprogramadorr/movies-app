@@ -16,7 +16,6 @@ import {RootStackParamList} from './types'; // ajustá la ruta si está en src/n
 
 import PantallaBusqueda from './screens/PantallaBusqueda';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
-
 const Stack = createNativeStackNavigator();
 
 const App = () => {

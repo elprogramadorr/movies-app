@@ -20,6 +20,7 @@ import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
+import { ToastAndroid } from 'react-native';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
@@ -191,12 +192,11 @@ const MovieDetails = () => {
                 onPress={() => {
                   const newStatus = !liked;
                   setLiked(newStatus);
-                  Alert.alert(
-                    newStatus ? 'Agregado a Favoritos' : 'Eliminado de Favoritos',
+                  ToastAndroid.show(
                     newStatus
-                      ? 'Se agregó a tus favoritos.'
-                      : 'Se eliminó de tus favoritos.',
-                    [{ text: 'OK' }],
+                      ? 'Se agregó a tus favoritos. ❤️'
+                      : 'Se eliminó de tus favoritos. ❌',
+                    ToastAndroid.SHORT
                   );
                 }}
               >
@@ -209,6 +209,7 @@ const MovieDetails = () => {
                   {liked ? 'Te gusta' : 'Me gusta'}
                 </Text>
               </TouchableOpacity>
+
             </View>
           </View>
 
