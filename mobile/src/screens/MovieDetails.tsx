@@ -20,6 +20,7 @@ import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
+import { ToastAndroid } from 'react-native';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
@@ -30,7 +31,7 @@ const MovieDetails = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('Detalles');
-
+  const [liked, setLiked] = useState(false);
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
@@ -183,10 +184,32 @@ const MovieDetails = () => {
                 <FontAwesome name="play-circle" size={14} color="white" />
                 <Text style={styles.buttonText}>Trailer</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.likeButton]}>
-                <AntDesign name="heart" size={14} color="#E63946" />
-                <Text style={styles.buttonText}>Te gusta</Text>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.likeButton,
+                ]}
+                onPress={() => {
+                  const newStatus = !liked;
+                  setLiked(newStatus);
+                  ToastAndroid.show(
+                    newStatus
+                      ? 'Se agregó a tus favoritos. ❤️'
+                      : 'Se eliminó de tus favoritos. ❌',
+                    ToastAndroid.SHORT
+                  );
+                }}
+              >
+                <AntDesign
+                  name={liked ? 'heart' : 'hearto'}
+                  size={14}
+                  color={liked ? '#E63946' : 'white'}
+                />
+                <Text style={styles.buttonText}>
+                  {liked ? 'Te gusta' : 'Me gusta'}
+                </Text>
               </TouchableOpacity>
+
             </View>
           </View>
 
