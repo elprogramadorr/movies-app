@@ -21,7 +21,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
 import { ToastAndroid } from 'react-native';
-import { setDoc, doc, deleteDoc } from "firebase/firestore";
+import { getDoc, setDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../../android/app/src/config/firebaseConfig";
 import { Timestamp } from "firebase/firestore";
 
@@ -50,6 +50,13 @@ const MovieDetails = () => {
           },
         );
         setMovieData(movieRes.data);
+        const docRef = doc(db, "me_gusta", movieId.toString());
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setLiked(true); // Ya estaba marcado como favorito
+        } else {
+          setLiked(false); // No estaba marcado
+        }  
 
         const videoRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos`,
