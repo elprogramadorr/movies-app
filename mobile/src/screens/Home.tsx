@@ -71,7 +71,12 @@ const Home = () => {
           <FontAwesome name="search" size={24} color="#E0E1DD" />
         </TouchableOpacity>
       </View>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionText}>Tus recomendaciones</Text>
+        <View style={styles.sectionLine} />
+      </View>
       <FlatList
+      
           data={movies.filter(
               (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
           )} // Filtra duplicados
@@ -107,7 +112,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#01161E',
+    backgroundColor: '#0D1B2A',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -117,7 +122,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    color: '#EFF6E0',
+    color: '#FFF',
     fontWeight: 'bold',
   },
   searchText: {
@@ -156,7 +161,22 @@ const styles = StyleSheet.create({
   image: {
     width: 50,
     height: 50,
-  }
+  },
+  sectionHeader: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  sectionText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  sectionLine: {
+    height: 2,
+    backgroundColor: '#FFF',
+    width: '100%',
+  },
 });
 
 export default Home;

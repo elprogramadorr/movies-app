@@ -15,7 +15,9 @@ import { debounce } from 'lodash';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../android/app/src/config/firebaseConfig';
 import HistorialBusqueda from '../components/HistorialBusqueda';
-
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
 interface Movie {
   id: number;
   title: string;
@@ -28,6 +30,7 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 const SearchScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [query, setQuery] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
 
@@ -79,7 +82,10 @@ const SearchScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Movie }) => (
-    <TouchableOpacity style={styles.imageContainer}>
+    <TouchableOpacity
+      style={styles.imageContainer}
+      onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+    >
       <Image
         source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
         style={styles.poster}
