@@ -18,7 +18,8 @@ const Stack = createNativeStackNavigator();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(null); // Inicialmente null
+  const [isConnected, setIsConnected] = useState(null);
+  const [showReconnectBanner, setShowReconnectBanner] = useState(false);
 
   useEffect(() => {
     FontAwesome.loadFont();
@@ -28,7 +29,6 @@ const App = () => {
       setIsLoading(false);
     }, 2000);
 
-    // Verificar el estado inicial de la conexión
     const checkInitialConnection = async () => {
       const state = await NetInfo.fetch();
       setIsConnected(state.isConnected);
@@ -36,8 +36,14 @@ const App = () => {
 
     checkInitialConnection();
 
-    // Suscribirse a cambios en la conexión
     const unsubscribe = NetInfo.addEventListener(state => {
+      if (isConnected === false && state.isConnected === true) {
+        // Se reconectó
+        setShowReconnectBanner(true);
+        setTimeout(() => {
+          setShowReconnectBanner(false);
+        }, 5000); // Mostrar 5 segundos
+      }
       setIsConnected(state.isConnected);
     });
 
@@ -45,18 +51,23 @@ const App = () => {
       clearTimeout(timer);
       unsubscribe();
     };
-  }, []);
+  }, [isConnected]); // ATENCIÓN: dependemos de isConnected
 
-  // No mostrar nada hasta que sepamos el estado de la conexión
   if (isConnected === null) {
-    return null; // O un loader si prefieres
+    return null;
   }
 
   return (
     <View style={{flex: 1}}>
       {!isConnected && (
-        <View style={styles.banner}>
+        <View style={[styles.banner, {backgroundColor: '#D9534F'}]}>
           <Text style={styles.bannerText}>🚫 Sin conexión a internet</Text>
+        </View>
+      )}
+
+      {showReconnectBanner && (
+        <View style={[styles.banner, {backgroundColor: '#5cb85c'}]}>
+          <Text style={styles.bannerText}>✅ ¡Conexión restablecida!</Text>
         </View>
       )}
 
@@ -88,14 +99,13 @@ const App = () => {
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: '#D9534F',
     padding: 8,
     alignItems: 'center',
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 1000, // Asegura que esté por encima de todo
+    zIndex: 1000,
   },
   bannerText: {
     color: 'white',
