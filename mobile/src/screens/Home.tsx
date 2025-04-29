@@ -13,6 +13,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { fetchSimilarMovies } from '../services/moviebymovieService';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -41,7 +42,7 @@ const Home = () => {
     if (selectedMovies.length > 0) {
       loadMovies();
     } else {
-      setLoading(false);
+      navigation.navigate('GenresScreen');
     }
   }, [selectedMovies]);
 
@@ -60,15 +61,15 @@ const Home = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <View style={styles.headerContainer}>
-        <View style={styles.sideSpace} />
+        
+        <Image
+                source={require('../assets/icono.png')} 
+                style={styles.image}
+              />
         <Text style={styles.title}>¡BIENVENIDO!</Text>
         <TouchableOpacity onPress={goToPantallaBusqueda}>
-          <Text style={styles.searchText}>BUSCAR</Text>
+          <FontAwesome name="search" size={24} color="#E0E1DD" />
         </TouchableOpacity>
-        <Button
-          title="Ir a Seleccionar Gustos"
-          onPress={() => navigation.navigate('GenresScreen')}
-        />
       </View>
       <FlatList
           data={movies.filter(
@@ -152,6 +153,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4, // Espaciado entre el título y la puntuación
   },
+  image: {
+    width: 50,
+    height: 50,
+  }
 });
 
 export default Home;

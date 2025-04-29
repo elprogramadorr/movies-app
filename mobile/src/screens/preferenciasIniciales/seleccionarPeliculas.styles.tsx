@@ -18,6 +18,11 @@ const styles = StyleSheet.create({
         textAlign: 'left',
         color: '#EFEFEF',
     },
+    poster: {
+        width: 120,
+        height: 180,
+        borderRadius: 8,
+    },
     text: {
         fontSize: 12,
         marginBottom: 8,
@@ -44,19 +49,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'relative',
     },
-    poster: {
-        width: 120,
-        height: 180,
-        borderRadius: 8,
-        marginBottom: 8,
-    },
     selectedOverlay: {
         position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        borderRadius: 15,
-        padding: 5,
+        top: '50%',
+        left: '50%',
+        transform: [{ translateX: -20 }, { translateY: -20 }], // Centra la carita feliz
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     finalizeButtonContainer: {
         alignItems: 'center',
