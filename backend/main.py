@@ -16,7 +16,8 @@ app.add_middleware(
 )
 
 # Clave API de TMDB (usa la misma que en tu frontend)
-TMDB_API_KEY = "tu_api_key_de_tmdb"
+TMDB_API_KEY = "5dbdbb368b27fcb081d9270432837455"
+#TMDB_API_KEY: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYTZhOGU3MDk3NWFlMjZiOGRhMjg4ZDRkYTIwYjQ0ZSIsIm5iZiI6MTc0Mzg5NDExNC4xNjYwMDAxLCJzdWIiOiI2N2YxYjY2MmVkZGVjMjhiMDNhZDNhOGMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.69DTQqGK7B0VuMZ3TkjfdJZ9OcJIMtPMIRtIig5UlRg',
 
 recommender = ContentBasedRecommender(TMDB_API_KEY)
 
