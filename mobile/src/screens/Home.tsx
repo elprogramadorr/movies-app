@@ -15,36 +15,67 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { fetchSimilarMovies } from '../services/moviebymovieService';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
+import { useAuthStore } from '../store/authStore';
+
+import { fetchRecommendations } from '../services/recommendationService';
+import { fetchPopularMovies } from '../services/moviesServices';
+
 const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Para obtener los parámetros pasados desde la pantalla anterior
   const [movies, setMovies] = useState<any[]>([]); // Lista de películas relacionadas
   const [loading, setLoading] = useState<boolean>(true);
-
+  
   const selectedMovies = route.params?.selectedMovies || []; // IDs de las películas seleccionadas
-
-  useEffect(() => {
-    const loadMovies = async () => {
-      try {
-        const allMovies: any[] = [];
-        for (const movieId of selectedMovies) {
-          const data = await fetchSimilarMovies(movieId); // Llama al servicio para cada ID
-          allMovies.push(...data.results); // Agrega las películas relacionadas
-        }
-        setMovies(allMovies); // Guarda todas las películas en el estado
-      } catch (error) {
-        console.error('Error al cargar las películas relacionadas:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (selectedMovies.length > 0) {
-      loadMovies();
-    } else {
-      navigation.navigate('GenresScreen');
+  const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
+ 
+  const loadRecommendations = async () => {
+    try {
+        const response = await fetchRecommendations({
+            selectedMovies: selectedMovies,
+            likedMovies: [], // Añade los IDs de películas con like
+            searchHistory: searchHistory,
+        });
+        setMovies(response.recommendations);
+    } catch (error) {
+        console.error(error);
     }
-  }, [selectedMovies]);
+};
+
+useEffect(() => {
+  const loadRecommendations = async () => {
+    try {
+      // 1. Obtener recomendaciones del backend
+      const response = await fetchRecommendations({
+        selectedMovies: selectedMovies,
+        likedMovies: [], // Aquí deberías pasar los IDs de películas que el usuario ha dado like
+        searchHistory: searchHistory || [], // Usa array vacío si es null/undefined
+      });
+
+      // 2. Filtrar películas duplicadas
+      const uniqueMovies = response.recommendations.filter(
+        (movie: any, index: number, self: any[]) => 
+          index === self.findIndex((m) => m.id === movie.id)
+      );
+
+      setMovies(uniqueMovies);
+    } catch (error) {
+      console.error('Error al cargar recomendaciones:', error);
+      // Opcional: Mostrar películas por defecto si falla la recomendación
+      const fallbackMovies = await fetchPopularMovies(); // Implementa esta función si es necesario
+      setMovies(fallbackMovies);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (selectedMovies.length > 0) {
+    loadRecommendations();
+  } else {
+    navigation.navigate('GenresScreen');
+  }
+}, [selectedMovies, searchHistory]);
+
 
   const goToPantallaBusqueda = () => {
     navigation.navigate('PantallaBusqueda');
