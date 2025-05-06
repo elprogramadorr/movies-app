@@ -8,12 +8,14 @@ load_dotenv()
 class TMDBClient:
     def __init__(self):
         self.base_url = "https://api.themoviedb.org/3"
-        self.api_key = os.getenv("TMDB_API_KEY")
+        self.api_key = os.getenv("TMDB_API_KEY", "5dbdbb368b27fcb081d9270432837455")
         #self.api_key = os.getenv("TMDB_API_KEY", "5dbdbb368b27fcb081d9270432837455")
         self.session = requests.Session()
+        self.session.params = {"api_key": self.api_key}
         self.session.headers.update({
           #  "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         })
 
     def get_movie_details(self, movie_id: int) -> Optional[Dict[str, Any]]:
@@ -23,7 +25,13 @@ class TMDBClient:
         try:
            # response = self.session.get(url)
             #response = self.session.get(url, params={"api_key": self.api_key})
-            response = self.session.get(url, params=params)
+            #response = self.session.get(url, params=params)
+            response = self.session.get(
+                url,
+                params={
+                    "append_to_response": "credits,keywords"  # Obtener más datos en una sola llamada
+                }
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:

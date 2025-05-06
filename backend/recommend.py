@@ -7,10 +7,13 @@ from backend.schemas import MovieFeatures
 from backend.tmdb_client import tmdb_client
 
 class ContentBasedRecommender:
-    def __init__(self, tmdb_api_key: str):
-        self.tmdb_api_key = "5dbdbb368b27fcb081d9270432837455"
+  #  def __init__(self, tmdb_api_key: str):
+    def __init__(self, tmdb_client_instance): 
+       # self.tmdb_api_key = tmdb_client_instance.api_key
+       # self.tmdb_api_key = tmdb_api_key
         self.base_url = "https://api.themoviedb.org/3"
-        self.tmdb = tmdb_client
+        self.tmdb = tmdb_client_instance
+        self.tmdb_api_key = tmdb_client_instance.api_key
 
     def _get_movie_features(self, movie_id: int):
         try:   
@@ -105,16 +108,17 @@ class ContentBasedRecommender:
             if max_similarity > 0:  # Ajusta este umbral según necesites
                 details = self.tmdb.get_movie_details(candidate["id"])
                 recommendations.append({
-                   # "movie_id": candidate["id"],
-                   # "title": self._get_movie_title(candidate["id"]),
-                   # "similarity_score": max_similarity,
+                    #"id": candidate["id"],  # Usar 'id' en lugar de 'movie_id'
                     "movie_id": candidate["id"],
                     "title": self._get_movie_title(candidate["id"]),
-                    "similarity_score": max_similarity,
+                    "vote_average": details.get("vote_average", 0) if details else 0,
                     "poster_path": details.get("poster_path") if details else None,
                     "backdrop_path": details.get("backdrop_path") if details else None,
                     "overview": details.get("overview", "") if details else "",
-                    "release_date": details.get("release_date", "") if details else ""
+                    "release_date": details.get("release_date", "") if details else "",
+                    "popularity": details.get("popularity", 0) if details else 0,
+                    "genre_ids": [g["id"] for g in details.get("genres", [])] if details else [],
+                    "similarity_score": max_similarity
                 })
 
         # Ordena por puntuación de similitud

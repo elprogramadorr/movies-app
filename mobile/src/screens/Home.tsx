@@ -42,7 +42,7 @@ useEffect(() => {
        // selectedGenres.map((g: Genre) => g.id),
         //likedMovies,
         //searchHistory
-        {limit: 10}
+        {limit: 20}
       );
 
     console.log("Recomendaciones del backend:", response);
@@ -116,7 +116,11 @@ useEffect(() => {
               >
                   <View style={styles.movieItem}>
                       <Image
-                          source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
+                           source={{ 
+                            uri: item.poster_path 
+                              ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                              : 'https://via.placeholder.com/150x225' // Imagen por defecto
+                          }}
                           style={styles.poster}
                       />
                       <Text

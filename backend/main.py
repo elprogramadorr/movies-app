@@ -34,6 +34,9 @@ async def get_recommendations(request: RecommendationRequest):
     """Endpoint para obtener recomendaciones personalizadas"""
     try:
         print("Datos recibidos:", request.dict())
+         # Validar que haya películas seleccionadas
+        if not request.selected_movies:
+            raise HTTPException(status_code=400, detail="No movies selected")
         
         #recommendations = recommender.get_recommendations(
         recommendations = recommender.get_initial_recommendations(
@@ -43,13 +46,17 @@ async def get_recommendations(request: RecommendationRequest):
             #preferred_genres=request.preferred_genres,  
             limit=request.limit
         )
-        
+         # Validar que haya recomendaciones
+        if not recommendations:
+            raise HTTPException(status_code=404, detail="No recommendations found")
+        # Formatear las recomendaciones
         return {
             "recommendations": recommendations,
             "generated_at": datetime.now().isoformat(),
             "algorithm_version": "content-based-v2"
         }
-        
+    except HTTPException:
+        raise   
     except Exception as e:
         print(f"Error en recomendaciones: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
