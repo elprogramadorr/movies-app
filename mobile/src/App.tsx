@@ -13,6 +13,7 @@ import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
 import MovieDetails from './screens/MovieDetails';
 import PantallaBusqueda from './screens/PantallaBusqueda';
+import ContenidoLista from './screens/listasPeliculas/ContenidoLista';
 
 const Stack = createNativeStackNavigator();
 
@@ -89,6 +90,7 @@ const App = () => {
                 component={PantallaBusqueda}
                 options={{headerShown: false, title: 'Buscar Películas'}}
               />
+              <Stack.Screen name="ContenidoLista" component={ContenidoLista} />
             </>
           )}
         </Stack.Navigator>

@@ -15,14 +15,11 @@ import { debounce } from 'lodash';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../android/app/src/config/firebaseConfig';
 import HistorialBusqueda from '../components/HistorialBusqueda';
-<<<<<<< HEAD
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
-=======
 import Icon from 'react-native-vector-icons/FontAwesome';
 
->>>>>>> main
 interface Movie {
   id: number;
   title: string;
