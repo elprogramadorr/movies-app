@@ -18,14 +18,6 @@ class UserPreferences(BaseModel):
     liked_movies: Optional[List[int]] = None
     search_history: Optional[List[str]] = None
 
-#class RecommendationRequest(UserPreferences):
- #   limit: Optional[int] = 20
-
-#class RecommendationRequest(BaseModel):
-#   selectedMovies: List[int] 
-#    likedMovies: Optional[List[int]] = None
-#    searchHistory: Optional[List[str]] = None
-#    limit: Optional[int] = 20
 class RecommendationRequest(BaseModel):
     selected_movies: List[int]
     #preferred_genres: Optional[List[int]] = None  # Nuevo campo importante

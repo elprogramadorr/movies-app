@@ -7,10 +7,9 @@ from backend.schemas import MovieFeatures
 from backend.tmdb_client import tmdb_client
 
 class ContentBasedRecommender:
-  #  def __init__(self, tmdb_api_key: str):
+    """Recomendador basado en contenido para películas usando TMDB."""
     def __init__(self, tmdb_client_instance): 
-       # self.tmdb_api_key = tmdb_client_instance.api_key
-       # self.tmdb_api_key = tmdb_api_key
+       
         self.base_url = "https://api.themoviedb.org/3"
         self.tmdb = tmdb_client_instance
         self.tmdb_api_key = tmdb_client_instance.api_key
@@ -145,17 +144,3 @@ class ContentBasedRecommender:
         url = f"{self.base_url}/movie/{movie_id}?api_key={self.tmdb_api_key}"
         return requests.get(url).json().get("title", "Unknown")
     
-    #def _get_movie_features(self, movie_id: int) -> MovieFeatures:
-      #  """Obtiene características estructuradas de la película"""
-     #   details = self.tmdb.get_movie_details(movie_id)
-      #  keywords = self.tmdb.get_movie_keywords(movie_id)
-        
-       # return MovieFeatures(
-        #    id=movie_id,
-         #   title=details.get("title", ""),
-         #   genres=[g["name"] for g in details.get("genres", [])],
-         #   keywords=keywords,
-         #   vote_average=details.get("vote_average", 0),
-         #   popularity=details.get("popularity", 0),
-         #   overview=details.get("overview"),
-        #)

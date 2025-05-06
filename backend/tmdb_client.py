@@ -9,11 +9,10 @@ class TMDBClient:
     def __init__(self):
         self.base_url = "https://api.themoviedb.org/3"
         self.api_key = os.getenv("TMDB_API_KEY", "5dbdbb368b27fcb081d9270432837455")
-        #self.api_key = os.getenv("TMDB_API_KEY", "5dbdbb368b27fcb081d9270432837455")
         self.session = requests.Session()
         self.session.params = {"api_key": self.api_key}
         self.session.headers.update({
-          #  "Authorization": f"Bearer {self.api_key}",
+    
             "Content-Type": "application/json",
             "Accept": "application/json"
         })
@@ -23,9 +22,7 @@ class TMDBClient:
         url = f"{self.base_url}/movie/{movie_id}"
         params = {"api_key": self.api_key}
         try:
-           # response = self.session.get(url)
-            #response = self.session.get(url, params={"api_key": self.api_key})
-            #response = self.session.get(url, params=params)
+           
             response = self.session.get(
                 url,
                 params={
