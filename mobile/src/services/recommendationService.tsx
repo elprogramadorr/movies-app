@@ -1,41 +1,6 @@
 import CONFIG from '../config/config';
 import { Movie, RecommendationsResponse } from '../types';
-//import { Movie } from 'types';
 
-/*
-interface RecommendationRequest {
-    selectedMovies: number[];
-    likedMovies?: number[];
-    searchHistory?: string[];
-}
-
-export const fetchRecommendations = async (data: RecommendationRequest) => {
-    try {
-        const response = await fetch('http://10.0.2.2:8000/recommendations',  {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            //body: JSON.stringify(data),
-            
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching recommendations:', error);
-        throw error;
-    }
-};*/
-
-/*interface RecommendationRequest {
-    selectedMovies: number[];    
-    likedMovies?: number[];      
-    preferredGenres?: number[];  
-  }*/
 interface RecommendationRequest {
         selected_movies: number[];
         //liked_movies?: number[];

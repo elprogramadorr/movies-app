@@ -47,10 +47,6 @@ useEffect(() => {
 
     console.log("Recomendaciones del backend:", response);
       // 2. Filtrar películas duplicadas
-      /*const uniqueMovies = response.recommendations.filter(
-        (movie: any, index: number, self: any[]) => 
-          index === self.findIndex((m) => m.id === movie.id)
-      );*/
       const uniqueMovies = response.filter(
         (movie: any, index: number, self: any[]) =>
           index === self.findIndex((m) => m.id === movie.id)
