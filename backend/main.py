@@ -1,13 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-import requests
-from recommend import ContentBasedRecommender
+from backend.recommend import ContentBasedRecommender
+from backend.tmdb_client import tmdb_client
+from backend.schemas import RecommendationRequest, RecommendationResponse
 
 app = FastAPI()
 
-# Configura CORS para permitir conexión con React Native
+# Configura CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,25 +17,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Clave API de TMDB (usa la misma que en tu frontend)
-TMDB_API_KEY = "5dbdbb368b27fcb081d9270432837455"
-#TMDB_API_KEY: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYTZhOGU3MDk3NWFlMjZiOGRhMjg4ZDRkYTIwYjQ0ZSIsIm5iZiI6MTc0Mzg5NDExNC4xNjYwMDAxLCJzdWIiOiI2N2YxYjY2MmVkZGVjMjhiMDNhZDNhOGMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.69DTQqGK7B0VuMZ3TkjfdJZ9OcJIMtPMIRtIig5UlRg',
+# Usa el cliente TMDB configurado
+recommender = ContentBasedRecommender(tmdb_client)
 
-recommender = ContentBasedRecommender(TMDB_API_KEY)
+# Middleware para debug (opcional)
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    body = await request.body()
+    print(f"Request recibido: {body.decode()}")
+    response = await call_next(request)
+    return response
 
-class UserPreferences(BaseModel):
-    selected_movies: List[int]  # IDs de películas seleccionadas
-    liked_movies: Optional[List[int]] = None  # IDs de películas con "like"
-    search_history: Optional[List[str]] = None  # Términos de búsqueda
-
-@app.post("/recommendations")
-async def get_recommendations(prefs: UserPreferences):
+# Un único endpoint bien definido
+@app.post("/recommendations", response_model=RecommendationResponse)
+async def get_recommendations(request: RecommendationRequest):
+    """Endpoint para obtener recomendaciones personalizadas"""
     try:
-        recommendations = recommender.get_recommendations(
-            prefs.selected_movies,
-            prefs.liked_movies,
-            prefs.search_history
+        print("Datos recibidos:", request.dict())
+        
+        #recommendations = recommender.get_recommendations(
+        recommendations = recommender.get_initial_recommendations(
+            selected_movies=request.selected_movies,
+           # liked_movies=request.liked_movies,
+          #  search_history=request.search_history,
+            #preferred_genres=request.preferred_genres,  
+            limit=request.limit
         )
-        return {"recommendations": recommendations}
+        
+        return {
+            "recommendations": recommendations,
+            "generated_at": datetime.now().isoformat(),
+            "algorithm_version": "content-based-v2"
+        }
+        
     except Exception as e:
+        print(f"Error en recomendaciones: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

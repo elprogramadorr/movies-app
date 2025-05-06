@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 type AuthState = {
   user: {name: string; email: string} | null;
   isAuthenticated: boolean;
+  searchHistory: string[]; 
   login: (userData: {name: string; email: string}) => void;
   logout: () => void;
 };
@@ -17,6 +18,7 @@ export const useAuthStore = create<AuthState>()(
     set => ({
       user: null,
       isAuthenticated: false,
+      searchHistory: [],
       login: userData => set({user: userData, isAuthenticated: true}),
       logout: () => set({user: null, isAuthenticated: false}),
     }),

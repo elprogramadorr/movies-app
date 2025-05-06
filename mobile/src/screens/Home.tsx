@@ -20,41 +20,39 @@ import { useAuthStore } from '../store/authStore';
 import { fetchRecommendations } from '../services/recommendationService';
 import { fetchPopularMovies } from '../services/moviesServices';
 
+type Genre = { id: number; name: string };
+
 const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Para obtener los parámetros pasados desde la pantalla anterior
   const [movies, setMovies] = useState<any[]>([]); // Lista de películas relacionadas
   const [loading, setLoading] = useState<boolean>(true);
   
-  const selectedMovies = route.params?.selectedMovies || []; // IDs de las películas seleccionadas
+  const selectedMovies = route.params?.selectedMovies || [];// IDs de las películas seleccionadas
+  const selectedGenres = route.params?.selectedGenres || [];
+  const [likedMovies, setLikedMovies] = useState<number[]>([]);
   const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
  
-  const loadRecommendations = async () => {
-    try {
-        const response = await fetchRecommendations({
-            selectedMovies: selectedMovies,
-            likedMovies: [], // Añade los IDs de películas con like
-            searchHistory: searchHistory,
-        });
-        setMovies(response.recommendations);
-    } catch (error) {
-        console.error(error);
-    }
-};
-
 useEffect(() => {
   const loadRecommendations = async () => {
     try {
       // 1. Obtener recomendaciones del backend
-      const response = await fetchRecommendations({
-        selectedMovies: selectedMovies,
-        likedMovies: [], // Aquí deberías pasar los IDs de películas que el usuario ha dado like
-        searchHistory: searchHistory || [], // Usa array vacío si es null/undefined
-      });
+      const response = await fetchRecommendations(
+        selectedMovies,
+       // selectedGenres.map((g: Genre) => g.id),
+        //likedMovies,
+        //searchHistory
+        {limit: 10}
+      );
 
+    console.log("Recomendaciones del backend:", response);
       // 2. Filtrar películas duplicadas
-      const uniqueMovies = response.recommendations.filter(
+      /*const uniqueMovies = response.recommendations.filter(
         (movie: any, index: number, self: any[]) => 
+          index === self.findIndex((m) => m.id === movie.id)
+      );*/
+      const uniqueMovies = response.filter(
+        (movie: any, index: number, self: any[]) =>
           index === self.findIndex((m) => m.id === movie.id)
       );
 
@@ -74,7 +72,7 @@ useEffect(() => {
   } else {
     navigation.navigate('GenresScreen');
   }
-}, [selectedMovies, searchHistory]);
+}, [selectedMovies, selectedGenres, likedMovies]);
 
 
   const goToPantallaBusqueda = () => {
