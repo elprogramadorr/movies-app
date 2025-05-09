@@ -111,7 +111,7 @@ const Home = () => {
                   nombreLista: 'Mis Películas Favoritas',
                   descripcion: 'Esta es una lista de mis películas favoritas.',
                   tiempoCreacion: '2025-05-06',
-                  peliculas: [950387, 1197306, 1045938, 1195506], // Cambia esto según tus datos
+                  peliculas: [950387, 1197306, 324544, 1045938, 1195506], // Cambia esto según tus datos
                 })
               }
             >
