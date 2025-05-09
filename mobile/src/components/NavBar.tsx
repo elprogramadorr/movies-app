@@ -10,7 +10,7 @@ const NavBar = () => {
 
   return (
     <View style={styles.navBar}>
-      <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+      <TouchableOpacity onPress={() => navigation.navigate('MisListasScreen')}>
         <FontAwesome name="film" size={30} color="#EFF6E0" />
       </TouchableOpacity>
 

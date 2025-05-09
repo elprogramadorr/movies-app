@@ -13,6 +13,8 @@ import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
 import MovieDetails from './screens/MovieDetails';
 import PantallaBusqueda from './screens/PantallaBusqueda';
+import MisListasScreen from './screens/MisListasScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -83,6 +85,7 @@ const App = () => {
                 name="seleccionarPeliculasGeneros"
                 component={SeleccionarPeliculasGeneros}
               />
+              <Stack.Screen name="MisListasScreen" component={MisListasScreen} />
               <Stack.Screen name="MovieDetails" component={MovieDetails} />
               <Stack.Screen
                 name="PantallaBusqueda"
