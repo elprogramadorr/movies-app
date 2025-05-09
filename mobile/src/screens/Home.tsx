@@ -31,7 +31,7 @@ const Home = () => {
   const selectedMovies = route.params?.selectedMovies || [];// IDs de las películas seleccionadas
   const selectedGenres = route.params?.selectedGenres || [];
   const [likedMovies, setLikedMovies] = useState<number[]>([]);
-  const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
+ // const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
  
 useEffect(() => {
   const loadRecommendations = async () => {
