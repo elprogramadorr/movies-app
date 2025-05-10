@@ -59,6 +59,7 @@ const Home = () => {
   }
 
   return (
+    
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <View style={styles.headerContainer}>
         
