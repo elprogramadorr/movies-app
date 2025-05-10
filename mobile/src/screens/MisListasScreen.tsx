@@ -80,23 +80,21 @@ const MisListasScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Mis listas</Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('NuevaLista')}
+          style={styles.addButton}
+        >
+          <Text style={styles.addButtonText}>＋</Text>
+        </TouchableOpacity>
       </View>
+
       <FlatList
         data={allLists}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
-      <TouchableOpacity
-        style={styles.newButton}
-        onPress={() => navigation.navigate('NuevaLista')}
-      >
-        <Text style={styles.newButtonText}>+ Nuevo</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -115,17 +113,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     position: 'relative',
   },
-  backButton: {
-    position: 'absolute',
-    left: 0,
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-  },
   headerTitle: {
     color: '#FFFFFF',
     fontSize: 20,
+    fontWeight: 'bold',
+  },
+  addButton: {
+    position: 'absolute',
+    right: 0,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 26,
     fontWeight: 'bold',
   },
   item: {
@@ -168,18 +167,6 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     backgroundColor: '#124559',
-  },
-  newButton: {
-    backgroundColor: '#EFF6E0',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  newButtonText: {
-    color: '#01161E',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 
