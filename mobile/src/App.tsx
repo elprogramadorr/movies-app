@@ -13,6 +13,7 @@ import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
 import MovieDetails from './screens/MovieDetails';
 import PantallaBusqueda from './screens/PantallaBusqueda';
+import Login from './screens/Login';
 
 const Stack = createNativeStackNavigator();
 
@@ -42,7 +43,7 @@ const App = () => {
         setShowReconnectBanner(true);
         setTimeout(() => {
           setShowReconnectBanner(false);
-        }, 5000); // Mostrar 5 segundos
+        }, 50); // Mostrar 5 segundos
       }
       setIsConnected(state.isConnected);
     });
@@ -77,6 +78,7 @@ const App = () => {
             <Stack.Screen name="Splash" component={Splash} />
           ) : (
             <>
+              <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Home" component={Home} />
               <Stack.Screen name="GenresScreen" component={GenresScreen} />
               <Stack.Screen
