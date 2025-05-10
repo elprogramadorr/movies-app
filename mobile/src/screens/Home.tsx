@@ -59,6 +59,7 @@ const Home = () => {
   }
 
   return (
+    
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <View style={styles.headerContainer}>
         
@@ -71,7 +72,12 @@ const Home = () => {
           <FontAwesome name="search" size={24} color="#E0E1DD" />
         </TouchableOpacity>
       </View>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionText}>Tus recomendaciones</Text>
+        <View style={styles.sectionLine} />
+      </View>
       <FlatList
+      
           data={movies.filter(
               (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
           )} // Filtra duplicados
@@ -98,6 +104,21 @@ const Home = () => {
           )}
           numColumns={2} // Muestra 2 elementos por fila
           contentContainerStyle={styles.movieList}
+          ListFooterComponent={
+            <TouchableOpacity
+              style={styles.footerButton}
+              onPress={() =>
+                navigation.navigate('ContenidoLista', {
+                  nombreLista: 'Mis Películas Favoritas',
+                  descripcion: 'Esta es una lista de mis películas favoritas.',
+                  tiempoCreacion: '2025-05-06',
+                  peliculas: [950387, 1197306, 324544, 1045938, 1195506], // Cambia esto según tus datos
+                })
+              }
+            >
+              <Text style={styles.footerButtonText}>Ver Lista Completa</Text>
+            </TouchableOpacity>
+          }
         />
     </SafeAreaView>
   );
@@ -107,7 +128,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#01161E',
+    backgroundColor: '#0D1B2A',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -117,7 +138,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    color: '#EFF6E0',
+    color: '#FFF',
     fontWeight: 'bold',
   },
   searchText: {
@@ -156,7 +177,37 @@ const styles = StyleSheet.create({
   image: {
     width: 50,
     height: 50,
-  }
+  },
+  sectionHeader: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  sectionText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  sectionLine: {
+    height: 2,
+    backgroundColor: '#FFF',
+    width: '100%',
+  },
+  /**Borrar despues */
+  footerButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  footerButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  /**Borrar despues */
 });
 
 export default Home;

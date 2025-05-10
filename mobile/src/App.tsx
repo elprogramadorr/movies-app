@@ -3,7 +3,7 @@ import {View, Text, StyleSheet} from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
@@ -13,6 +13,7 @@ import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
 import MovieDetails from './screens/MovieDetails';
 import PantallaBusqueda from './screens/PantallaBusqueda';
+import ContenidoLista from './screens/listasPeliculas/ContenidoLista';
 
 const Stack = createNativeStackNavigator();
 
@@ -58,6 +59,7 @@ const App = () => {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <View style={{flex: 1}}>
       {!isConnected && (
         <View style={[styles.banner, {backgroundColor: '#D9534F'}]}>
@@ -70,7 +72,7 @@ const App = () => {
           <Text style={styles.bannerText}>✅ ¡Conexión restablecida!</Text>
         </View>
       )}
-
+      
       <NavigationContainer>
         <Stack.Navigator screenOptions={{headerShown: false}}>
           {isLoading ? (
@@ -89,11 +91,14 @@ const App = () => {
                 component={PantallaBusqueda}
                 options={{headerShown: false, title: 'Buscar Películas'}}
               />
+              <Stack.Screen name="ContenidoLista" component={ContenidoLista} />
             </>
           )}
         </Stack.Navigator>
       </NavigationContainer>
+      
     </View>
+    </GestureHandlerRootView>
   );
 };
 
