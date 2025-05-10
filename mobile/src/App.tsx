@@ -3,10 +3,9 @@ import {View, Text, StyleSheet} from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-
+import auth from '@react-native-firebase/auth';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-
 import Splash from './screens/Splash';
 import Home from './screens/Home';
 import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
@@ -14,6 +13,7 @@ import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/selecci
 import MovieDetails from './screens/MovieDetails';
 import PantallaBusqueda from './screens/PantallaBusqueda';
 import Login from './screens/Login';
+import {useAuthStore} from './store/useAuthStore';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,50 +22,76 @@ const App = () => {
   const [isConnected, setIsConnected] = useState(null);
   const [showReconnectBanner, setShowReconnectBanner] = useState(false);
 
+  // Get user and setUser from the auth store
+  const user = useAuthStore(state => state.user);
+  const setUser = useAuthStore(state => state.setUser);
+
   useEffect(() => {
+    // Load fonts
     FontAwesome.loadFont();
     AntDesign.loadFont();
 
+    // Set initial loading timer
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
 
+    // Check network connection
     const checkInitialConnection = async () => {
       const state = await NetInfo.fetch();
       setIsConnected(state.isConnected);
     };
-
     checkInitialConnection();
 
+    // Network connection listener
     const unsubscribe = NetInfo.addEventListener(state => {
       if (isConnected === false && state.isConnected === true) {
-        // Se reconectó
+        // Reconnected
         setShowReconnectBanner(true);
         setTimeout(() => {
           setShowReconnectBanner(false);
-        }, 50); // Mostrar 5 segundos
+        }, 5000); // Show for 5 seconds (changed from 50ms to 5000ms)
       }
       setIsConnected(state.isConnected);
     });
 
+    // Firebase auth state listener
+    const unsubscribeAuth = auth().onAuthStateChanged(firebaseUser => {
+      if (firebaseUser) {
+        // Transform Firebase user to match your User type
+        const appUser = {
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName || 'Usuario',
+          email: firebaseUser.email || '',
+          photoURL: firebaseUser.photoURL || undefined,
+        };
+        setUser(appUser);
+      } else {
+        setUser(null);
+      }
+    });
+
+    // Clean up
     return () => {
       clearTimeout(timer);
       unsubscribe();
+      unsubscribeAuth(); // Don't forget to clean up the auth listener
     };
-  }, [isConnected]); // ATENCIÓN: dependemos de isConnected
+  }, [isConnected, setUser]); // Removed user from dependencies to avoid unnecessary re-renders
 
+  // Show nothing while checking connection status
   if (isConnected === null) {
     return null;
   }
 
   return (
     <View style={{flex: 1}}>
+      {/* Network status banners */}
       {!isConnected && (
         <View style={[styles.banner, {backgroundColor: '#D9534F'}]}>
           <Text style={styles.bannerText}>🚫 Sin conexión a internet</Text>
         </View>
       )}
-
       {showReconnectBanner && (
         <View style={[styles.banner, {backgroundColor: '#5cb85c'}]}>
           <Text style={styles.bannerText}>✅ ¡Conexión restablecida!</Text>
@@ -76,9 +102,9 @@ const App = () => {
         <Stack.Navigator screenOptions={{headerShown: false}}>
           {isLoading ? (
             <Stack.Screen name="Splash" component={Splash} />
-          ) : (
+          ) : user ? (
+            // Authenticated user flow
             <>
-              <Stack.Screen name="Login" component={Login} />
               <Stack.Screen name="Home" component={Home} />
               <Stack.Screen name="GenresScreen" component={GenresScreen} />
               <Stack.Screen
@@ -92,6 +118,9 @@ const App = () => {
                 options={{headerShown: false, title: 'Buscar Películas'}}
               />
             </>
+          ) : (
+            // Non-authenticated user flow
+            <Stack.Screen name="Login" component={Login} />
           )}
         </Stack.Navigator>
       </NavigationContainer>
