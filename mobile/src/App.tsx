@@ -16,6 +16,7 @@ import PantallaBusqueda from './screens/PantallaBusqueda';
 import ContenidoLista from './screens/listasPeliculas/ContenidoLista';
 import MisListasScreen from './screens/MisListasScreen';
 import NuevaListaScreen from './screens/NuevaListaScreen';
+import AddMoviesList from './screens/listasPeliculas/AddMoviesList';
 
 
 const Stack = createNativeStackNavigator();
@@ -97,6 +98,10 @@ const App = () => {
                 options={{headerShown: false, title: 'Buscar Películas'}}
               />
               <Stack.Screen name="ContenidoLista" component={ContenidoLista} />
+              <Stack.Screen
+                name="AddMoviesList"
+                component={AddMoviesList}
+                options={{title: 'Añadir Películas'}}/>
             </>
           )}
         </Stack.Navigator>

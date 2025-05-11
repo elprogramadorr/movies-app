@@ -59,12 +59,7 @@ const Home = () => {
   }
 
   return (
-<<<<<<< HEAD
-    
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
-=======
     <SafeAreaView style={styles.container}>
->>>>>>> main
       <View style={styles.headerContainer}>
         <Image
           source={require('../assets/icono.png')}
@@ -75,7 +70,6 @@ const Home = () => {
           <FontAwesome name="search" size={24} color="#E0E1DD" />
         </TouchableOpacity>
       </View>
-<<<<<<< HEAD
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionText}>Tus recomendaciones</Text>
         <View style={styles.sectionLine} />
@@ -124,36 +118,8 @@ const Home = () => {
             </TouchableOpacity>
           }
         />
-=======
-
-      <FlatList
-        data={movies.filter(
-          (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
-          >
-            <View style={styles.movieItem}>
-              <Image
-                source={{ uri: `https://image.tmdb.org/t/p/w500${item.poster_path}` }}
-                style={styles.poster}
-              />
-              <Text style={styles.movieTitle} numberOfLines={1} ellipsizeMode="tail">
-                {item.title}
-              </Text>
-              <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-        numColumns={2}
-        contentContainerStyle={styles.movieList}
-      />
-
       {/* NavBar al final */}
       <NavBar />
->>>>>>> main
     </SafeAreaView>
   );
 };
@@ -218,7 +184,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
   },
-<<<<<<< HEAD
   sectionHeader: {
     marginHorizontal: 16,
     marginBottom: 8,
@@ -249,8 +214,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   /**Borrar despues */
-=======
->>>>>>> main
 });
 
 export default Home;

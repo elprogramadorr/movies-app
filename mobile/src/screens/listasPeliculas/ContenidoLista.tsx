@@ -21,7 +21,7 @@ const ContenidoLista: React.FC = () => {
   useEffect(() => {
     console.log('ContenidoLista - useEffect - peliculas:', peliculas);
     if (!peliculas || peliculas.length === 0) {
-      console.error('El array de películas está vacío o no es válido.');
+      console.log('El array de películas está vacío o no es válido.');
       return;
     }
   
@@ -53,29 +53,34 @@ const ContenidoLista: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Encabezado */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>Atrás</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>{nombreLista}</Text>
-      </View>
-
-      {/* Contenido */}
-      <Text style={styles.description}>{descripcion}</Text>
-      <Text style={styles.creationTime}>Creado el: {tiempoCreacion}</Text>
-
-      {/* Lista de películas */}
-      <FlatList
-        data={moviePosters}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={renderItem}
-        numColumns={4} // 4 posters por fila
-        contentContainerStyle={styles.list}
-      />
+  <View style={styles.container}>
+    {/* Encabezado */}
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Text style={styles.backButton}>Atrás</Text>
+      </TouchableOpacity>
+      <Text style={styles.title}>{nombreLista}</Text>
     </View>
-  );
+
+    {/* Contenido */}
+    <Text style={styles.description}>{descripcion}</Text>
+    <Text style={styles.creationTime}>Creado el: {tiempoCreacion}</Text>
+
+    {/* Lista de películas */}
+    <FlatList
+      data={moviePosters}
+      keyExtractor={(item, index) => index.toString()}
+      renderItem={renderItem}
+      numColumns={4} // 4 posters por fila
+      contentContainerStyle={styles.list}
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No hay películas en esta lista.</Text>
+        </View>
+      }
+    />
+  </View>
+);
 };
 
 export default ContenidoLista;
