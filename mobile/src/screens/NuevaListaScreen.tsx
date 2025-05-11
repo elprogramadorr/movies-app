@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types.ts';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../android/app/src/config/firebaseConfig';
+import { Image } from 'react-native';
+
+const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 const NuevaListaScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -14,6 +17,7 @@ const NuevaListaScreen = () => {
   const [description, setDescription] = useState('');
   const [titleError, setTitleError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
+  const [selectedMovies, setSelectedMovies] = useState<{ id: number; poster_path: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleTitleChange = (text: string) => {
@@ -48,6 +52,7 @@ const NuevaListaScreen = () => {
         idLista: docRef.id,
         nombreLista: title,
         descripcion: description,
+        peliculas: selectedMovies.map((movie) => movie.id),
         fechaCreacion: serverTimestamp(),
       });
 
@@ -60,6 +65,16 @@ const NuevaListaScreen = () => {
       setLoading(false);
     }
   };
+
+  const renderSelectedMovie = ({ item }: { item: { id: number; poster_path: string } }) => (
+    <View style={styles.imageContainer}>
+      <Image
+        source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
+        style={styles.poster}
+        resizeMode="cover"
+      />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -96,9 +111,29 @@ const NuevaListaScreen = () => {
       />
       {descriptionError ? <Text style={styles.errorText}>{descriptionError}</Text> : null}
 
-      <TouchableOpacity disabled={loading}>
-        <Text style={styles.addMovies}>Añadir películas...</Text>
-      </TouchableOpacity>
+      {selectedMovies.length > 0 ? (
+        <FlatList
+          data={selectedMovies}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderSelectedMovie}
+          numColumns={3}
+          contentContainerStyle={styles.grid}
+        />
+      ) : (
+        <TouchableOpacity
+          disabled={loading}
+          onPress={() =>
+            navigation.navigate('AddMoviesList', {
+              selectedMovies, // Pasar las películas seleccionadas
+              setSelectedMovies: (updatedMovies: { id: number; poster_path: string }[]) => {
+                setSelectedMovies(updatedMovies); // Actualizar las películas seleccionadas al regresar
+              },
+            })
+          }
+        >
+          <Text style={styles.addMovies}>Añadir películas...</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -138,6 +173,19 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#D9534F',
     marginBottom: 8,
+  },
+  grid: {
+    justifyContent: 'center',
+  },
+  imageContainer: {
+    flex: 1 / 3,
+    margin: 5,
+    alignItems: 'center',
+  },
+  poster: {
+    width: '100%',
+    aspectRatio: 2 / 3,
+    borderRadius: 10,
   },
 });
 
