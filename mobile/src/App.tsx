@@ -16,8 +16,10 @@ import {RootStackParamList} from './types'; // ajustá la ruta si está en src/n
 
 import PantallaBusqueda from './screens/PantallaBusqueda';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
+import CategoryScreen from './screens/CategoryScreen';
 
-const Stack = createNativeStackNavigator();
+//const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -31,10 +33,17 @@ const App = () => {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
-
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Navigator 
+        screenOptions={{
+          headerShown: false,
+          headerStyle: {
+            backgroundColor: '#0D1B2A', // Color de fondo del header
+          },
+          headerTintColor: '#FFF', // Color del texto del header
+        }}
+      >
         {isLoading ? (
           <Stack.Screen name="Splash" component={Splash} />
         ) : (
@@ -57,11 +66,21 @@ const App = () => {
               component={PantallaBusqueda}
               options={{headerShown: false, title: 'Buscar Películas'}}
             />
+            {/* Nueva pantalla de categorías */}
+            <Stack.Screen
+              name="CategoryScreen"
+              component={CategoryScreen}
+              options={({ route }) => ({ 
+                title: route.params?.categoryName || 'Categoría',
+                headerShown: true // Mostrar header solo para esta pantalla
+              })}
+            />
           </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
+
 };
 
 export default App;
