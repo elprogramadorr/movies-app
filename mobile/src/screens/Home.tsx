@@ -8,6 +8,9 @@ import {
   Button,
   FlatList,
   Image,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
@@ -19,6 +22,8 @@ import { useAuthStore } from '../store/authStore';
 
 import { fetchRecommendations } from '../services/recommendationService';
 import { fetchPopularMovies } from '../services/moviesServices';
+import { fetchGenres} from '../services/genresServices';
+import { fetchMoviesByGenres } from '../services/movieGenreService';
 
 type Genre = { id: number; name: string };
 
@@ -26,22 +31,59 @@ const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Para obtener los parámetros pasados desde la pantalla anterior
   const [movies, setMovies] = useState<any[]>([]); // Lista de películas relacionadas
+  const [categories, setCategories] = useState<any[]>([]); 
   const [loading, setLoading] = useState<boolean>(true);
-  
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
+
   const selectedMovies = route.params?.selectedMovies || [];// IDs de las películas seleccionadas
   const selectedGenres = route.params?.selectedGenres || [];
   const [likedMovies, setLikedMovies] = useState<number[]>([]);
  // const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
- 
+const loadCategories = async () => {
+  try {
+    // 1. Obtener géneros/categorías desde la API
+    const genresData = await fetchGenres();
+    
+    // 2. Para cada género, obtener películas populares
+    const categoriesWithMovies = await Promise.all(
+      genresData.genres.map(async (genre: any) => {
+        const movies = await fetchMoviesByGenres(genre.id);
+        return {
+          id: genre.id,
+          name: genre.name,
+          movies: movies.results.slice(0, 10) // Tomamos las primeras 10 películas
+        };
+      })
+    );
+    
+    setCategories(categoriesWithMovies);
+  } catch (error) {
+    console.error('Error al cargar categorías:', error);
+    // Puedes mostrar categorías por defecto si falla
+    setCategories([]);
+  }
+};
+
+
 useEffect(() => {
   const loadRecommendations = async () => {
     try {
+
+       // Si no hay géneros seleccionados, redirigir a la pantalla de selección
+       //if (selectedGenres.length === 0) {
+        //navigation.navigate('GenresScreen');
+        //return;
+     // }
+
+      // Cargar categorías basadas en los géneros seleccionados
+      await loadCategories();
       // 1. Obtener recomendaciones del backend
       const response = await fetchRecommendations(
         selectedMovies,
        // selectedGenres.map((g: Genre) => g.id),
         //likedMovies,
         //searchHistory
+        selectedGenres,
         {limit: 20}
       );
 
@@ -74,6 +116,13 @@ useEffect(() => {
   const goToPantallaBusqueda = () => {
     navigation.navigate('PantallaBusqueda');
   };
+  const goToCategory = (category: any) => {
+    navigation.navigate('CategoryScreen', { 
+      categoryId: category.id,
+      categoryName: category.name,
+      movies: category.movies 
+    });
+  };
 
   if (loading) {
     return (
@@ -85,56 +134,161 @@ useEffect(() => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
+    <ScrollView>
+      {/* Header */}
       <View style={styles.headerContainer}>
-        
         <Image
-                source={require('../assets/icono.png')} 
-                style={styles.image}
-              />
+          source={require('../assets/icono.png')} 
+          style={styles.image}
+        />
         <Text style={styles.title}>¡BIENVENIDO!</Text>
         <TouchableOpacity onPress={goToPantallaBusqueda}>
           <FontAwesome name="search" size={24} color="#E0E1DD" />
         </TouchableOpacity>
       </View>
+
+      {/* Sección "Tus recomendaciones" */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionText}>Tus recomendaciones</Text>
         <View style={styles.sectionLine} />
       </View>
-      <FlatList
-      
-          data={movies.filter(
-              (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
-          )} // Filtra duplicados
-          keyExtractor={(item) => item.id.toString()} // Usa el ID como clave
+
+      {/* Sección "Tus géneros favoritos" */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Porque te gusto</Text>
+        <FlatList
+          horizontal
+          data={categories.filter((cat: any) => selectedGenres.includes(cat.id))}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-              <TouchableOpacity
-                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
-              >
-                  <View style={styles.movieItem}>
-                      <Image
-                           source={{ 
-                            uri: item.poster_path 
-                              ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                              : 'https://via.placeholder.com/150x225' // Imagen por defecto
-                          }}
-                          style={styles.poster}
-                      />
-                      <Text
-                          style={styles.movieTitle}
-                          numberOfLines={1} // Limita a una línea
-                          ellipsizeMode="tail" // Agrega puntos suspensivos al final si no cabe
-                      >
-                          {item.title}
-                      </Text>
-                      <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
-                  </View>
-              </TouchableOpacity>
+            <TouchableOpacity onPress={() => goToCategory(item)}>
+              <View style={styles.genrePill}>
+                <Text style={styles.genreText}>{item.name}</Text>
+              </View>
+            </TouchableOpacity>
           )}
-          numColumns={2} // Muestra 2 elementos por fila
+          contentContainerStyle={styles.horizontalList}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
+      {/* Sección "Recomendaciones basadas en tus gustos" */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Recomendaciones para ti</Text>
+        <FlatList
+          horizontal
+          data={movies.slice(0, 10)}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+            >
+              <Image
+                source={{ 
+                  uri: item.poster_path 
+                    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                    : 'https://via.placeholder.com/150x225'
+                }}
+                style={styles.horizontalPoster}
+              />
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.horizontalList}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
+      {/* Mostrar categorías basadas en los géneros seleccionados */}
+      {categories.filter((cat: any) => selectedGenres.includes(cat.id)).map((category: any) => (
+        <View key={category.id} style={styles.sectionContainer}>
+          <View style={styles.categoryHeader}>
+            <Text style={styles.sectionTitle}>{category.name}</Text>
+            <TouchableOpacity onPress={() => goToCategory(category)}>
+              <Text style={styles.seeAll}>Ver todos</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            horizontal
+            data={category.movies}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+              >
+                <Image
+                  source={{ 
+                    uri: item.poster_path 
+                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                      : 'https://via.placeholder.com/150x225'
+                  }}
+                  style={styles.horizontalPoster}
+                />
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.horizontalList}
+            showsHorizontalScrollIndicator={false}
+          />
+        </View>
+      ))}
+
+      {/* Otras categorías */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Descubre más categorías</Text>
+        <FlatList
+          horizontal
+          data={categories.filter((cat: any) => !selectedGenres.includes(cat.id))}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => goToCategory(item)}>
+              <View style={styles.genrePill}>
+                <Text style={styles.genreText}>{item.name}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.horizontalList}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
+      {/* Lista de películas en grid */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Todas tus recomendaciones</Text>
+        <FlatList
+          data={movies.filter(
+            (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
+          )}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+            >
+              <View style={styles.movieItem}>
+                <Image
+                  source={{ 
+                    uri: item.poster_path 
+                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                      : 'https://via.placeholder.com/150x225'
+                  }}
+                  style={styles.poster}
+                />
+                <Text
+                  style={styles.movieTitle}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {item.title}
+                </Text>
+                <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          numColumns={2}
           contentContainerStyle={styles.movieList}
         />
-    </SafeAreaView>
-  );
+      </View>
+    </ScrollView>
+  </SafeAreaView>
+);
 };
 
 const styles = StyleSheet.create({
@@ -205,6 +359,48 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: '#FFF',
     width: '100%',
+  },
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 16,
+    marginBottom: 10,
+  },
+
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  seeAll: {
+    color: '#E0E1DD',
+    fontSize: 14,
+  },
+  horizontalList: {
+    paddingLeft: 16,
+  },
+  horizontalPoster: {
+    width: 120,
+    height: 180,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  genrePill: {
+    backgroundColor: '#E50914',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 10,
+  },
+  genreText: {
+    color: '#FFF',
+    fontWeight: 'bold',
   },
 });
 

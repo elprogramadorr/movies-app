@@ -5,13 +5,13 @@ interface RecommendationRequest {
         selected_movies: number[];
         //liked_movies?: number[];
         //search_history?: string[];
-        //preferred_genres?: number[];
+        preferred_genres?: number[];
         limit?: number;
     }
 
   export const fetchRecommendations = async (
     selectedMovies: number[],
-    //selectedGenres: number[] = [],
+    selectedGenres: number[] = [],
     //likedMovies: number[] = [],
     //searchHistory: string[] = []
     options?: {
@@ -26,7 +26,7 @@ interface RecommendationRequest {
         },
         body: JSON.stringify({
         selected_movies: selectedMovies,
-        //preferred_genres: selectedGenres,
+        preferred_genres: selectedGenres,
         //liked_movies: likedMovies,
        // search_history: searchHistory,
        limit: options?.limit || 20
