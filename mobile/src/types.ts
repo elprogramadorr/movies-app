@@ -5,5 +5,7 @@ export type RootStackParamList = {
     GenresScreen: undefined;
     seleccionarPeliculasGeneros: { selectedGenres: any[] };
     MovieDetails: { movieId: number };
+    MisListasScreen: undefined;
+    AddMoviesList: { listId: string };
   };
   

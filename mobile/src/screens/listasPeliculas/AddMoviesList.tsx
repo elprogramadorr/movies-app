@@ -11,13 +11,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import axios from 'axios';
-import { debounce } from 'lodash';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../android/app/src/config/firebaseConfig';
-import HistorialBusqueda from '../components/HistorialBusqueda';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface Movie {
@@ -31,8 +25,14 @@ const API_KEY = 'dc66f3e3e06fbb42ce432acf4341427f';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
-const SearchScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+const AddMoviesList = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { selectedMovies, setSelectedMovies } = route.params as {
+    selectedMovies: { id: number; poster_path: string }[];
+    setSelectedMovies: (updatedMovies: { id: number; poster_path: string }[]) => void;
+  };
+  const [localSelectedMovies, setLocalSelectedMovies] = useState(selectedMovies);
   const [query, setQuery] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
 
@@ -53,12 +53,8 @@ const SearchScreen = () => {
       });
 
       const filteredResults = response.data.results
-        .filter(
-          (movie: Movie) =>
-            movie.poster_path &&
-            movie.title.toLowerCase().includes(trimmedQuery),
-        )
-        .sort((a: Movie, b: Movie) => b.popularity - a.popularity); //ordena por popularidad, los más populares aparecen primero
+        .filter((movie: Movie) => movie.poster_path)
+        .sort((a: Movie, b: Movie) => b.popularity - a.popularity);
 
       setMovies(filteredResults);
     } catch (error) {
@@ -66,27 +62,23 @@ const SearchScreen = () => {
     }
   };
 
-  const searchMoviesDebounced = debounce(searchMovies, 500);
-
-  const saveSearchToFirebase = async (searchTerm: string) => {
-    const trimmed = searchTerm.trim();
-    if (!trimmed) return;
-
-    try {
-      await addDoc(collection(db, 'busqueda'), {
-        busqueda: trimmed,
-        fecha: serverTimestamp(),
-      });
-      console.log('Guardado en Firebase:', trimmed);
-    } catch (error) {
-      console.error('Error al guardar en Firebase:', error);
+  const toggleMovieInList = (movie: Movie) => {
+    if (localSelectedMovies.some((m) => m.id === movie.id)) {
+      setLocalSelectedMovies((prev) => prev.filter((m) => m.id !== movie.id));
+    } else {
+      setLocalSelectedMovies((prev) => [...prev, { id: movie.id, poster_path: movie.poster_path }]);
     }
+  };
+
+  const handleSave = () => {
+    setSelectedMovies(localSelectedMovies); // Actualiza las películas seleccionadas en `NuevaListaScreen`
+    navigation.goBack(); // Regresa a la pantalla anterior
   };
 
   const renderItem = ({ item }: { item: Movie }) => (
     <TouchableOpacity
       style={styles.imageContainer}
-      onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+      onPress={() => toggleMovieInList(item)}
     >
       <Image
         source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
@@ -94,6 +86,12 @@ const SearchScreen = () => {
         resizeMode="cover"
       />
       <Text style={styles.title}>{item.title}</Text>
+      <Icon
+        name={localSelectedMovies.some((m) => m.id === item.id) ? 'check-circle' : 'circle-o'}
+        size={20}
+        color={localSelectedMovies.some((m) => m.id === item.id) ? '#E63946' : '#aaa'}
+        style={styles.checkIcon}
+      />
     </TouchableOpacity>
   );
 
@@ -101,48 +99,19 @@ const SearchScreen = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <KeyboardAvoidingView style={styles.container} behavior="padding">
         <View style={styles.inputWrapper}>
-          <Icon
-            name="search"
-            size={20}
-            color="#aaa"
-            style={styles.searchIcon}
-          />
+          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
           <TextInput
             placeholder="Buscar..."
             placeholderTextColor="#aaa"
             value={query}
-            onChangeText={text => {
+            onChangeText={(text) => {
               setQuery(text);
-              searchMoviesDebounced(text);
-            }}
-            onSubmitEditing={() => {
-              searchMovies(query);
-              saveSearchToFirebase(query);
+              searchMovies(text);
             }}
             style={styles.input}
             returnKeyType="search"
           />
-          {query.length > 0 && (
-            <TouchableOpacity
-              onPress={() => {
-                setQuery('');
-                setMovies([]);
-              }}
-              style={styles.clearButton}>
-              <Text style={styles.clearText}>×</Text>
-            </TouchableOpacity>
-          )}
         </View>
-
-        {query.length === 0 && (
-          <HistorialBusqueda
-            onItemPress={item => {
-              setQuery(item);
-              searchMovies(item);
-              saveSearchToFirebase(item);
-            }}
-          />
-        )}
 
         {movies.length === 0 && query.trim().length > 0 && (
           <Text style={styles.noResultsText}>
@@ -152,11 +121,15 @@ const SearchScreen = () => {
 
         <FlatList
           data={movies}
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           numColumns={3}
           contentContainerStyle={styles.grid}
         />
+
+        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+          <Text style={styles.saveButtonText}>Guardar selección</Text>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -185,16 +158,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
   },
-  clearButton: {
-    paddingHorizontal: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  clearText: {
-    fontSize: 22,
-    color: '#fff',
-    lineHeight: 24,
-  },
   grid: {
     justifyContent: 'center',
   },
@@ -220,6 +183,23 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     fontSize: 14,
   },
+  checkIcon: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+  },
+  saveButton: {
+    backgroundColor: '#E63946',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    margin: 10,
+  },
+  saveButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
-export default SearchScreen;
+export default AddMoviesList;

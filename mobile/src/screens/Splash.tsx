@@ -7,7 +7,6 @@ import {
   Dimensions,
   StyleSheet,
 } from 'react-native';
-import ReactCurvedText from 'react-curved-text';
 const {width} = Dimensions.get('window');
 
 const Splash = () => {
