@@ -5,6 +5,11 @@ export type RootStackParamList = {
     GenresScreen: undefined;
     seleccionarPeliculasGeneros: { selectedGenres: any[] };
     MovieDetails: { movieId: number };
+    CategoryScreen: {
+      categoryId: number;
+      categoryName: string;
+      movies: Movie[]; // Usamos la interfaz Movie que ya tienes
+    };
   };
   export interface Movie {
     id: number;

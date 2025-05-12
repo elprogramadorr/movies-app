@@ -69,8 +69,8 @@ const App = () => {
             {/* Nueva pantalla de categorías */}
             <Stack.Screen
               name="CategoryScreen"
-              component={CategoryScreen}
-              options={({ route }) => ({ 
+                component={CategoryScreen} 
+                options={({ route }: { route: { params: RootStackParamList['CategoryScreen'] } }) => ({
                 title: route.params?.categoryName || 'Categoría',
                 headerShown: true // Mostrar header solo para esta pantalla
               })}
