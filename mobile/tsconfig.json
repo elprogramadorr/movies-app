@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "Node16",
+    "target": "ESNext",
+    "module": "NodeNext",
     "lib": ["esnext"],
     "jsx": "react-native",
     "allowJs": true,
     "noEmit": true,
     "isolatedModules": true,
     "strict": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
