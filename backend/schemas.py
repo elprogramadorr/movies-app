@@ -22,7 +22,7 @@ class RecommendationRequest(BaseModel):
     selected_movies: List[int]
     #preferred_genres: Optional[List[int]] = None  # Nuevo campo importante
     #liked_movies: Optional[List[int]] = None
-    #preferred_genres: Optional[List[int]] = Field(default_factory=list)
+   # preferred_genres: Optional[List[int]] = Field(default_factory=list)
     #liked_movies: Optional[List[int]] = Field(default_factory=list)
     limit: Optional[int] = 20
 

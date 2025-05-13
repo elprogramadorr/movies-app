@@ -43,7 +43,7 @@ async def get_recommendations(request: RecommendationRequest):
             selected_movies=request.selected_movies,
            # liked_movies=request.liked_movies,
           #  search_history=request.search_history,
-            preferred_genres=request.preferred_genres,  
+           # preferred_genres=request.preferred_genres,  
             limit=request.limit
         )
          # Validar que haya recomendaciones
