@@ -25,18 +25,26 @@ const Visto = ({ movieId, userId = 'anonimo' }: Props) => {
   const toggleVisto = async () => {
     const nuevoEstado = !visto;
     setVisto(nuevoEstado);
-    await docRef.set({
-      userId,
-      movieId,
-      visto: nuevoEstado,
-      timestamp: firestore.FieldValue.serverTimestamp(),
-    });
+
+    if (nuevoEstado) {
+      // Marcar como visto → crear o actualizar el documento
+      await docRef.set({
+        userId,
+        movieId,
+        visto: true,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      // Marcar como no visto → eliminar el documento
+      await docRef.delete();
+    }
 
     ToastAndroid.show(
       nuevoEstado ? 'Agregado a vistos 👁️' : 'Quitado de vistos 🚫',
       ToastAndroid.SHORT
     );
   };
+
 
   return (
     <TouchableOpacity

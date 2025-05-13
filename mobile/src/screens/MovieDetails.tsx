@@ -439,7 +439,7 @@ const MovieDetails = () => {
 const styles = StyleSheet.create({
 
     botonesContainer: {
-    marginTop: 5,
+    marginTop: 4,
     paddingHorizontal: 5,
   },
 
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   },
   leftContainer: {
     flex: 0.7,
-    paddingRight: 12,
+    paddingRight: 8,
   },
   posterWrapper: {
     flex: 0.3,

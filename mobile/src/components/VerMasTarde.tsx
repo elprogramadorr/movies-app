@@ -25,18 +25,24 @@ const VerMasTarde = ({ movieId, userId = 'anonimo' }: Props) => {
   const toggleAgregar = async () => {
     const nuevoEstado = !agregado;
     setAgregado(nuevoEstado);
-    await docRef.set({
-      userId,
-      movieId,
-      agregado: nuevoEstado,
-      timestamp: firestore.FieldValue.serverTimestamp(),
-    });
+
+    if (nuevoEstado) {
+      await docRef.set({
+        userId,
+        movieId,
+        agregado: true,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      await docRef.delete();
+    }
 
     ToastAndroid.show(
       nuevoEstado ? 'Agregado a Ver más tarde ➕' : 'Quitado de Ver más tarde ❌',
       ToastAndroid.SHORT
     );
   };
+
 
   return (
     <TouchableOpacity
@@ -45,17 +51,20 @@ const VerMasTarde = ({ movieId, userId = 'anonimo' }: Props) => {
       style={{
         backgroundColor: '#5A6268',
         height: 30,
-        width: 90,
+        width: 30,
         borderRadius: 4,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
+        gap: 0,
       }}
     >
-      <FontAwesome name="plus" size={16} color="white" />
+      <FontAwesome name={agregado ? 'check' : 'clock-o'}
+        size={16}
+        color="white"
+        style={{ marginRight: 0 }} />
       <Text style={{ color: 'white', fontSize: 12 }}>
-        {agregado ? 'En Lista' : 'Ver luego'}
+        {agregado ? '' : ''}
       </Text>
     </TouchableOpacity>
   );
