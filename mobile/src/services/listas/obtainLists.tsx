@@ -1,17 +1,22 @@
-import { db } from '../../../android/app/src/config/firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import {db} from '../../../android/app/src/config/firebaseConfig';
+import {collection, getDocs} from 'firebase/firestore';
 
 /**
  * Obtiene todas las listas de Firestore.
  * @returns Promesa que resuelve con un array de listas.
  */
-export const obtainLists = async (): Promise<any[]> => {
+export const obtainLists = async (userID: string): Promise<any[]> => {
   try {
-    const querySnapshot = await getDocs(collection(db, 'lista'));
-    const lists = querySnapshot.docs.map((doc) => ({
+    // Consulta las listas del usuario específico
+    const querySnapshot = await getDocs(
+      collection(db, 'users', userID, 'listas'),
+    );
+
+    const lists = querySnapshot.docs.map(doc => ({
       id: doc.id, // ID del documento
       ...doc.data(), // Datos del documento
     }));
+
     console.log('Listas obtenidas:', lists); // Verifica las listas en la consola
     return lists;
   } catch (error) {
