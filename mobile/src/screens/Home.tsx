@@ -7,31 +7,70 @@ import {
   SafeAreaView,
   FlatList,
   Image,
+  Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types.ts';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 import { fetchSimilarMovies } from '../services/moviebymovieService.tsx';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import NavBar from '../components/NavBar.tsx'; 
 
 const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Para obtener los parámetros pasados desde la pantalla anterior
-  const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Lista de películas relacionadas
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedMovies, setSelectedMovies] = useState<number[]>([]);
+  const [selectedMoviesLoaded, setSelectedMoviesLoaded] = useState<boolean>(false); 
 
-  const selectedMovies = route.params?.selectedMovies || []; // IDs de las películas seleccionadas
+  useEffect(() => {
+    const fetchSelectedMovies = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+          Alert.alert('Error', 'No se encontró un usuario autenticado.');
+          return;
+        }
+
+        const firestore = getFirestore();
+        const userDoc = doc(firestore, 'users', user.uid);
+        const userSnapshot = await getDoc(userDoc);
+
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          const movies = userData?.selectedMovies || [];
+          setSelectedMovies(movies);
+        } else {
+          navigation.navigate('seleccionarGustos'); // Redirige si no existe el documento
+        }
+      } catch (error) {
+        console.error('Error al obtener las películas seleccionadas:', error);
+        navigation.navigate('seleccionarGustos'); // Redirige en caso de error
+      } finally {
+        setSelectedMoviesLoaded(true); // Indica que las películas seleccionadas se han cargado
+      }
+    };
+
+    fetchSelectedMovies();
+  }, []);
+
+  const goToPantallaBusqueda = () => {
+    navigation.navigate('PantallaBusqueda');
+  };
 
   useEffect(() => {
     const loadMovies = async () => {
       try {
         const allMovies: any[] = [];
-        for (const movieId of selectedMovies) { // Llama al servicio para cada ID
-          const data = await fetchSimilarMovies(movieId); // Agrega las películas relacionadas
+        for (const movieId of selectedMovies) {
+          const data = await fetchSimilarMovies(movieId);
           allMovies.push(...data.results);
         }
-        setMovies(allMovies); // Guarda todas las películas en el estado
+        setMovies(allMovies);
       } catch (error) {
         console.error('Error al cargar las películas relacionadas:', error);
       } finally {
@@ -39,16 +78,14 @@ const Home = () => {
       }
     };
 
-    if (selectedMovies.length > 0) {
-      loadMovies();
-    } else {
-      navigation.navigate('GenresScreen');
+    if (selectedMoviesLoaded) { // Solo ejecuta si las películas seleccionadas están cargadas
+      if (selectedMovies.length > 0) {
+        loadMovies();
+      } else {
+        navigation.navigate('GenresScreen');
+      }
     }
-  }, [selectedMovies]);
-
-  const goToPantallaBusqueda = () => {
-    navigation.navigate('PantallaBusqueda');
-  };
+  }, [selectedMovies, selectedMoviesLoaded]); 
 
   if (loading) {
     return (
@@ -101,22 +138,6 @@ const Home = () => {
               </TouchableOpacity>
           )}
           numColumns={2} // Muestra 2 elementos por fila
-          contentContainerStyle={styles.movieList}
-          ListFooterComponent={
-            <TouchableOpacity
-              style={styles.footerButton}
-              onPress={() =>
-                navigation.navigate('ContenidoLista', {
-                  nombreLista: 'Mis Películas Favoritas',
-                  descripcion: 'Esta es una lista de mis películas favoritas.',
-                  tiempoCreacion: '2025-05-06',
-                  peliculas: [950387, 1197306, 324544, 1045938, 1195506], // Cambia esto según tus datos
-                })
-              }
-            >
-              <Text style={styles.footerButtonText}>Ver Lista Completa</Text>
-            </TouchableOpacity>
-          }
         />
       {/* NavBar al final */}
       <NavBar />
@@ -151,9 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFF',
     fontWeight: 'bold',
-  },
-  movieList: {
-    padding: 16,
   },
   movieItem: {
     flex: 1,
@@ -199,21 +217,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     width: '100%',
   },
-  /**Borrar despues */
-  footerButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  footerButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  /**Borrar despues */
 });
 
 export default Home;
