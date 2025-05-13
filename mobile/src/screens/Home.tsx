@@ -83,7 +83,7 @@ useEffect(() => {
        // selectedGenres.map((g: Genre) => g.id),
         //likedMovies,
         //searchHistory
-        selectedGenres,
+        //selectedGenres,
         {limit: 20}
       );
 
