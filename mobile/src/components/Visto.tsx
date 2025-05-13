@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, Text, ToastAndroid, View } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
+
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import firestore, { firebase } from '@react-native-firebase/firestore';
+
 
 type Props = {
   movieId: number;
@@ -32,7 +34,7 @@ const Visto = ({ movieId, userId = 'anonimo' }: Props) => {
         userId,
         movieId,
         visto: true,
-        timestamp: firestore.FieldValue.serverTimestamp(),
+        //timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } else {
       // Marcar como no visto → eliminar el documento
