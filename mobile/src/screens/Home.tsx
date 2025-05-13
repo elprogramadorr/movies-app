@@ -101,22 +101,6 @@ const Home = () => {
               </TouchableOpacity>
           )}
           numColumns={2} // Muestra 2 elementos por fila
-          contentContainerStyle={styles.movieList}
-          ListFooterComponent={
-            <TouchableOpacity
-              style={styles.footerButton}
-              onPress={() =>
-                navigation.navigate('ContenidoLista', {
-                  nombreLista: 'Mis Películas Favoritas',
-                  descripcion: 'Esta es una lista de mis películas favoritas.',
-                  tiempoCreacion: '2025-05-06',
-                  peliculas: [950387, 1197306, 324544, 1045938, 1195506], // Cambia esto según tus datos
-                })
-              }
-            >
-              <Text style={styles.footerButtonText}>Ver Lista Completa</Text>
-            </TouchableOpacity>
-          }
         />
       {/* NavBar al final */}
       <NavBar />
@@ -151,9 +135,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFF',
     fontWeight: 'bold',
-  },
-  movieList: {
-    padding: 16,
   },
   movieItem: {
     flex: 1,
@@ -199,21 +180,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     width: '100%',
   },
-  /**Borrar despues */
-  footerButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  footerButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  /**Borrar despues */
 });
 
 export default Home;
