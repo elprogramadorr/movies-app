@@ -23,6 +23,7 @@ const Home = () => {
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedMovies, setSelectedMovies] = useState<number[]>([]);
+  const [selectedMoviesLoaded, setSelectedMoviesLoaded] = useState<boolean>(false); 
 
   useEffect(() => {
     const fetchSelectedMovies = async () => {
@@ -36,17 +37,13 @@ const Home = () => {
         }
 
         const firestore = getFirestore();
-        const userDoc = doc(firestore, 'users', user.uid); // Reemplaza 'USER_ID' con el ID del usuario autenticado
+        const userDoc = doc(firestore, 'users', user.uid);
         const userSnapshot = await getDoc(userDoc);
 
         if (userSnapshot.exists()) {
           const userData = userSnapshot.data();
           const movies = userData?.selectedMovies || [];
-          if (movies.length > 0) {
-            setSelectedMovies(movies);
-          } else {
-            navigation.navigate('seleccionarGustos'); // Redirige si no hay películas seleccionadas
-          }
+          setSelectedMovies(movies);
         } else {
           navigation.navigate('seleccionarGustos'); // Redirige si no existe el documento
         }
@@ -54,7 +51,7 @@ const Home = () => {
         console.error('Error al obtener las películas seleccionadas:', error);
         navigation.navigate('seleccionarGustos'); // Redirige en caso de error
       } finally {
-        setLoading(false);
+        setSelectedMoviesLoaded(true); // Indica que las películas seleccionadas se han cargado
       }
     };
 
@@ -81,12 +78,14 @@ const Home = () => {
       }
     };
 
-    if (selectedMovies.length > 0) {
-      loadMovies();
-    } else {
-      navigation.navigate('GenresScreen');
+    if (selectedMoviesLoaded) { // Solo ejecuta si las películas seleccionadas están cargadas
+      if (selectedMovies.length > 0) {
+        loadMovies();
+      } else {
+        navigation.navigate('GenresScreen');
+      }
     }
-  }, [selectedMovies]);
+  }, [selectedMovies, selectedMoviesLoaded]); 
 
   if (loading) {
     return (
