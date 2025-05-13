@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "zustand": "^5.0.3"
-  },
-  "devDependencies": {
-    "@react-native/typescript-config": "^0.79.0",
-    "@types/react": "^19.1.1"
-  }
-}
