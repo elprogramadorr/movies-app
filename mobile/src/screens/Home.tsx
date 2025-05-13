@@ -74,20 +74,6 @@ const loadCategories = async () => {
     setCategories([]);
   }
 };
-/*useEffect(() => {
-  console.log('selectedGenres en Home:', selectedGenres);
-  if (selectedGenres && Array.isArray(selectedGenres) && selectedGenres.length > 0) {
-    fetchMoviesByGenres(selectedGenres)
-      .then(data => setMovies(data.results))
-      .catch(error => console.error('Error al cargar películas por géneros seleccionados:', error));
-  } else {
-    // Si no hay géneros seleccionados, puedes cargar películas populares por defecto
-    fetchPopularMovies()
-      .then(data => setMovies(data))
-      .catch(error => console.error('Error al cargar películas populares:', error));
-  }
-  setInitialLoading(false);
-}, [selectedGenres]);*/
 
 
 
@@ -95,11 +81,6 @@ useEffect(() => {
   const loadRecommendations = async () => {
     try {
 
-       // Si no hay géneros seleccionados, redirigir a la pantalla de selección
-       //if (selectedGenres.length === 0) {
-        //navigation.navigate('GenresScreen');
-        //return;
-     // }
 
       // Cargar categorías basadas en los géneros seleccionados
       await loadCategories();
@@ -213,6 +194,26 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
 
+      {/* Otras categorías */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Descubre más categorías</Text>
+        <FlatList
+          horizontal
+          data={categories.filter((cat: any) => !selectedGenres.includes(cat.id))}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => goToCategory(item)} activeOpacity={0.5} >
+              <View style={styles.genrePill}>
+                <Text style={styles.genreText}>{item.name}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.horizontalList}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+
+
       {/* Sección "Tus recomendaciones" */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionText}>Tus recomendaciones</Text>
@@ -305,25 +306,6 @@ useEffect(() => {
           />
         </View>
       ))}
-
-      {/* Otras categorías */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Descubre más categorías</Text>
-        <FlatList
-          horizontal
-          data={categories.filter((cat: any) => !selectedGenres.includes(cat.id))}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => goToCategory(item)}>
-              <View style={styles.genrePill}>
-                <Text style={styles.genreText}>{item.name}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.horizontalList}
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
 
       {/* Lista de películas en grid */}
       <View style={styles.sectionContainer}>
@@ -467,15 +449,18 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   genrePill: {
-    backgroundColor: '#E50914',
+    backgroundColor: 'transparent', // Fondo transparente
     borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     marginRight: 10,
+    borderWidth: 1, // Añade borde
+    borderColor: '#FFF', // Borde blanco
   },
   genreText: {
     color: '#FFF',
-    fontWeight: 'bold',
+    fontWeight: '500',
+    fontSize: 14,
   },
   loadingContainer: { // Agrega este estilo
     flex: 1,
