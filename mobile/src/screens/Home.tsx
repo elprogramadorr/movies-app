@@ -7,31 +7,73 @@ import {
   SafeAreaView,
   FlatList,
   Image,
+  Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types.ts';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 import { fetchSimilarMovies } from '../services/moviebymovieService.tsx';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import NavBar from '../components/NavBar.tsx'; 
 
 const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Para obtener los parámetros pasados desde la pantalla anterior
-  const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Lista de películas relacionadas
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedMovies, setSelectedMovies] = useState<number[]>([]);
 
-  const selectedMovies = route.params?.selectedMovies || []; // IDs de las películas seleccionadas
+  useEffect(() => {
+    const fetchSelectedMovies = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+          Alert.alert('Error', 'No se encontró un usuario autenticado.');
+          return;
+        }
+
+        const firestore = getFirestore();
+        const userDoc = doc(firestore, 'users', user.uid); // Reemplaza 'USER_ID' con el ID del usuario autenticado
+        const userSnapshot = await getDoc(userDoc);
+
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          const movies = userData?.selectedMovies || [];
+          if (movies.length > 0) {
+            setSelectedMovies(movies);
+          } else {
+            navigation.navigate('seleccionarGustos'); // Redirige si no hay películas seleccionadas
+          }
+        } else {
+          navigation.navigate('seleccionarGustos'); // Redirige si no existe el documento
+        }
+      } catch (error) {
+        console.error('Error al obtener las películas seleccionadas:', error);
+        navigation.navigate('seleccionarGustos'); // Redirige en caso de error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSelectedMovies();
+  }, []);
+
+  const goToPantallaBusqueda = () => {
+    navigation.navigate('PantallaBusqueda');
+  };
 
   useEffect(() => {
     const loadMovies = async () => {
       try {
         const allMovies: any[] = [];
-        for (const movieId of selectedMovies) { // Llama al servicio para cada ID
-          const data = await fetchSimilarMovies(movieId); // Agrega las películas relacionadas
+        for (const movieId of selectedMovies) {
+          const data = await fetchSimilarMovies(movieId);
           allMovies.push(...data.results);
         }
-        setMovies(allMovies); // Guarda todas las películas en el estado
+        setMovies(allMovies);
       } catch (error) {
         console.error('Error al cargar las películas relacionadas:', error);
       } finally {
@@ -45,10 +87,6 @@ const Home = () => {
       navigation.navigate('GenresScreen');
     }
   }, [selectedMovies]);
-
-  const goToPantallaBusqueda = () => {
-    navigation.navigate('PantallaBusqueda');
-  };
 
   if (loading) {
     return (

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, Alert, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, Alert, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { fetchMoviesByGenres } from '../../services/movieGenreService';
 import styles from './seleccionarPeliculas.styles';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
