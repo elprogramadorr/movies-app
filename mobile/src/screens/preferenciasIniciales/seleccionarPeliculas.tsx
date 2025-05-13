@@ -3,6 +3,8 @@ import { View, Text, FlatList, Button, Alert, Image, ScrollView, TouchableOpacit
 import { fetchMoviesByGenres } from '../../services/movieGenreService';
 import styles from './seleccionarPeliculas.styles';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { getFirestore, doc, setDoc, collection } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 
 const SeleccionarPeliculasGeneros = ({ route, navigation }: { route: any; navigation: any }) => {
     const { selectedGenres } = route.params;
@@ -49,12 +51,46 @@ const SeleccionarPeliculasGeneros = ({ route, navigation }: { route: any; naviga
         }
     };
 
-    const handleFinalize = () => {
+    const saveMoviesToFirestore = async () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+            Alert.alert('Error', 'No se encontró un usuario autenticado.');
+            return;
+        }
+
+        try {
+            const firestore = getFirestore();
+            const userDoc = doc(collection(firestore, 'users'), user.uid);
+            console.log("cargando....")
+            await setDoc(
+                userDoc,
+                {
+                    selectedMovies, // Guarda las películas seleccionadas
+                },
+                { merge: true } // Combina con los datos existentes
+            );
+
+            console.log('Películas guardadas en Firestore');
+        } catch (error) {
+            console.error('Error al guardar las películas en Firestore:', error);
+            Alert.alert('Error', 'No se pudieron guardar las películas.');
+        }
+    };
+
+    const handleFinalize = async () => {
         if (selectedMovies.length < 1) {
             Alert.alert('Selecciona al menos 1 película.');
             return;
         }
-        navigation.navigate('Home', { selectedMovies: selectedMovies });
+
+        try {
+            await saveMoviesToFirestore(); // Guarda las películas seleccionadas en Firestore
+            navigation.navigate('Home', { selectedMovies: selectedMovies });
+        } catch (error) {
+            console.error('Error al finalizar la selección:', error);
+        }
     };
 
     if (error) {

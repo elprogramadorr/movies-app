@@ -5,6 +5,8 @@ import styles from './seleccionarGustos.styles';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types'; // Asegúrate de importar el tipo
+import { getFirestore, collection, doc, setDoc } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 
 const GenresScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -35,6 +37,30 @@ const GenresScreen = () => {
         } else {
             // Si ya hay 3 géneros seleccionados, no permitimos agregar más
             Alert.alert('Límite alcanzado', 'Solo puedes seleccionar hasta 3 géneros.');
+        }
+    };
+
+    const saveGenresToFirestore = async () => {
+        const auth = getAuth(); // Obtén la instancia de autenticación
+        const user = auth.currentUser; // Obtén el usuario autenticado
+        if (!user) {
+            Alert.alert('Error', 'No se encontró un usuario autenticado.');
+            return;
+        }
+        try {
+            const firestore = getFirestore(); // Obtén la instancia de Firestore
+            const userDoc = doc(collection(firestore, 'users'), user.uid); // Referencia al documento del usuario
+            await setDoc(
+                userDoc,
+                {
+                    selectedGenres, // Guarda los géneros seleccionados
+                },
+                { merge: true } // Combina con los datos existentes
+            );
+            console.log('Géneros guardados en Firestore');
+        } catch (error) {
+            console.error('Error al guardar los géneros en Firestore:', error);
+            Alert.alert('Error', 'No se pudieron guardar los géneros.');
         }
     };
 
@@ -69,14 +95,18 @@ const GenresScreen = () => {
         );
     };
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (selectedGenres.length < 3) {
             Alert.alert('Debes seleccionar al menos 3 géneros.');
             return;
         }
-        console.log('Géneros seleccionados:', selectedGenres); // Muestra los géneros seleccionados en la consola
-        const selectedGenresData = genres.filter((genre) => selectedGenres.includes(genre.id));
-        navigation.navigate('seleccionarPeliculasGeneros', { selectedGenres: selectedGenresData });
+        try {
+            await saveGenresToFirestore(); // Guarda los géneros en Firestore
+            const selectedGenresData = genres.filter((genre) => selectedGenres.includes(genre.id));
+            navigation.navigate('seleccionarPeliculasGeneros', { selectedGenres: selectedGenresData });
+        } catch (error) {
+            console.error('Error al guardar los géneros antes de navegar:', error);
+        }
     };
 
     return (
