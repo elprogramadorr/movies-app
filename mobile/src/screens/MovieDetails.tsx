@@ -271,7 +271,7 @@ const MovieDetails = () => {
             {/* Fila inferior: Visto + Ver más tarde */}
             <View style={styles.filaInferior}>
               <Visto movieId={movieId} />
-              <VerMasTarde movieId={movieId} />
+              {/*<VerMasTarde movieId={movieId} />BORRADO EL BOTON DE RELOJ*/}
             </View>
           </View>
             
@@ -452,7 +452,6 @@ const styles = StyleSheet.create({
 
   filaInferior: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'center',
   },
 
