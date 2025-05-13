@@ -1,30 +1,32 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import {View, TouchableOpacity, StyleSheet, Text} from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types.ts';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../types.ts';
 
 const NavBar = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
 
   const icons = [
-    { name: 'film', screen: 'MisListasScreen' },
-    { name: 'home', screen: 'Home' },
-    { name: 'user', screen: 'PantallaBusqueda' },
+    {name: 'film', screen: 'MisListasScreen'},
+    {name: 'home', screen: 'Home'},
+    {name: 'user', screen: 'UserProfile'},
   ];
 
   return (
     <View style={styles.navBar}>
-      {icons.map((icon) => {
+      {icons.map(icon => {
         const isActive = route.name === icon.screen;
         return (
           <TouchableOpacity
             key={icon.name}
-            onPress={() => navigation.navigate(icon.screen as keyof RootStackParamList)}
-            style={styles.iconContainer}
-          >
+            onPress={() =>
+              navigation.navigate(icon.screen as keyof RootStackParamList)
+            }
+            style={styles.iconContainer}>
             <FontAwesome
               name={icon.name}
               size={30}
