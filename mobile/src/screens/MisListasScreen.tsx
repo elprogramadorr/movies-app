@@ -174,7 +174,6 @@ const MisListasScreen = () => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -202,6 +201,43 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 26,
     fontWeight: 'bold',
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  image: {
+    width: 50,
+    height: 75,
+    marginRight: 12,
+    borderRadius: 4,
+  },
+  placeholderImage: {
+    width: 50,
+    height: 75,
+    marginRight: 12,
+    borderRadius: 4,
+    backgroundColor: '#124559',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  description: {
+    color: '#A1A1A1',
+    fontSize: 14,
   },
   separator: {
     height: 1,
