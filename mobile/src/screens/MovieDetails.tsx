@@ -22,6 +22,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
 import Visto from '../components/Visto';
+import VerMasTarde from '../components/VerMasTarde';
 import { ToastAndroid } from 'react-native';
 import { getDoc, setDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../../android/app/src/config/firebaseConfig";
@@ -212,14 +213,13 @@ const MovieDetails = () => {
               </Text>
             </View>
 
-            <View style={styles.buttonsContainer}>
+            <View style={styles.botonesContainer}>
+            {/* Fila superior: Trailer, Me gusta, Listas */}
+            <View style={styles.filaSuperior}>
               <TouchableOpacity style={styles.button} onPress={openTrailer}>
                 <FontAwesome name="play-circle" size={14} color="white" />
                 <Text style={styles.buttonText}>Trailer</Text>
               </TouchableOpacity>
-                <View style={{ marginTop: 8 }}>
-                  <Visto movieId={movieId} />
-                </View>
 
               <TouchableOpacity
                 style={[
@@ -259,6 +259,7 @@ const MovieDetails = () => {
                   {liked ? 'Te gusta' : 'Me gusta'}
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.listButton}
                 onPress={handleOpenBottomSheet} // Abre el BottomSheet
@@ -266,6 +267,13 @@ const MovieDetails = () => {
                 <FontAwesome name="list" size={14} color="white" />
               </TouchableOpacity>
             </View>
+
+            {/* Fila inferior: Visto + Ver más tarde */}
+            <View style={styles.filaInferior}>
+              <Visto movieId={movieId} />
+              <VerMasTarde movieId={movieId} />
+            </View>
+          </View>
             
           </View>
 
@@ -429,6 +437,25 @@ const MovieDetails = () => {
 };
 
 const styles = StyleSheet.create({
+
+    botonesContainer: {
+    marginTop: 5,
+    paddingHorizontal: 5,
+  },
+
+  filaSuperior: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  filaInferior: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+
   container: {
     backgroundColor: '#0D1B2A',
     flex: 1,
