@@ -20,10 +20,11 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useAuthStore } from '../store/authStore';
 
-import { fetchRecommendations } from '../services/recommendationService';
+import { fetchRecommendations, updateRecommendations } from '../services/recommendationService';
 import { fetchPopularMovies } from '../services/moviesServices';
 import { fetchGenres} from '../services/genresServices';
 import { fetchMoviesByGenres } from '../services/movieGenreService';
+import { Movie } from '../types';
 
 type Genre = { id: number; name: string };
 
@@ -37,8 +38,14 @@ const Home = () => {
 
   const selectedMovies = route.params?.selectedMovies || [];// IDs de las películas seleccionadas
   const selectedGenres = route.params?.selectedGenres || [];
-  const [likedMovies, setLikedMovies] = useState<number[]>([]);
- // const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
+  const [userLikes, setUserLikes] = useState<number[]>([]);
+  const [recommendedMovies, setRecommendedMovies] = useState<Movie[]>([]);
+ 
+  // Obtener las preferencias iniciales de los parámetros de ruta
+  const initialSelectedMovies = route.params?.selectedMovies || [];
+  const initialSelectedGenres = route.params?.selectedGenres || [];
+ 
+  // const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
 const loadCategories = async () => {
   try {
     // 1. Obtener géneros/categorías desde la API
@@ -47,7 +54,8 @@ const loadCategories = async () => {
     // 2. Para cada género, obtener películas populares
     const categoriesWithMovies = await Promise.all(
       genresData.genres.map(async (genre: any) => {
-        const movies = await fetchMoviesByGenres(genre.id);
+        const movies = await fetchMoviesByGenres([genre.id]); 
+       // const movies = await fetchMoviesByGenres(genre.id);
         return {
           id: genre.id,
           name: genre.name,
@@ -86,6 +94,8 @@ useEffect(() => {
         //selectedGenres,
         {limit: 20}
       );
+      setRecommendedMovies(response);
+      setUserLikes(initialSelectedMovies);
 
     console.log("Recomendaciones del backend:", response);
       // 2. Filtrar películas duplicadas
@@ -110,7 +120,7 @@ useEffect(() => {
   } else {
     navigation.navigate('GenresScreen');
   }
-}, [selectedMovies, selectedGenres, likedMovies]);
+}, [selectedMovies, selectedGenres, navigation]);
 
 
   const goToPantallaBusqueda = () => {
@@ -122,6 +132,23 @@ useEffect(() => {
       categoryName: category.name,
       movies: category.movies 
     });
+  };
+
+  // Manejar cuando el usuario da like a una película
+  const handleLikeMovie = async (movieId: number) => {
+    try {
+      // Actualizar el estado local primero para una respuesta rápida
+      setUserLikes(prev => [...prev, movieId]);
+      
+      // Obtener recomendaciones actualizadas del backend
+      const updatedRecs = await updateRecommendations(userLikes, movieId);
+      setRecommendedMovies(updatedRecs);
+      
+    } catch (error) {
+      console.error('Error updating recommendations:', error);
+      // Revertir el like si falla
+      setUserLikes(prev => prev.filter(id => id !== movieId));
+    }
   };
 
   if (loading) {

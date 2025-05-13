@@ -144,3 +144,19 @@ class ContentBasedRecommender:
         url = f"{self.base_url}/movie/{movie_id}?api_key={self.tmdb_api_key}"
         return requests.get(url).json().get("title", "Unknown")
     
+    # En recommender.py, añadir este método
+def update_recommendations(
+    self,
+    user_profile: List[int],  # Películas que le gustan al usuario
+    new_interaction: int,     # Nueva película con la que interactuó
+    limit: int = 20
+    ):
+    """Actualiza recomendaciones basadas en nueva interacción"""
+    # Añadir la nueva película al perfil si no está ya
+    if new_interaction not in user_profile:
+        updated_profile = user_profile + [new_interaction]
+    else:
+        updated_profile = user_profile
+    
+    # Reutilizar el método existente
+    return self.get_initial_recommendations(updated_profile, limit)
