@@ -21,6 +21,7 @@ import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
+import Visto from '../components/Visto';
 import { ToastAndroid } from 'react-native';
 import { getDoc, setDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../../android/app/src/config/firebaseConfig";
@@ -216,6 +217,10 @@ const MovieDetails = () => {
                 <FontAwesome name="play-circle" size={14} color="white" />
                 <Text style={styles.buttonText}>Trailer</Text>
               </TouchableOpacity>
+                <View style={{ marginTop: 8 }}>
+                  <Visto movieId={movieId} />
+                </View>
+
               <TouchableOpacity
                 style={[
                   styles.button,
