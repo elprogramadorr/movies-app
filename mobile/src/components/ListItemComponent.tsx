@@ -148,13 +148,16 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     backgroundColor: '#124559',
+    justifyContent: 'center',
     borderRadius: 4,
     overflow: 'hidden',
+    marginRight: 12,
   },
   moviePoster: {
     width: 26, // Ajusta el ancho de cada poster
     height: 39, // Ajusta el alto de cada poster
     borderRadius: 2,
+    
   },
 });
 
