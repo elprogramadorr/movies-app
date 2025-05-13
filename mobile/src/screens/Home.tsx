@@ -15,16 +15,17 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { fetchSimilarMovies } from '../services/moviebymovieService';
+import { fetchSimilarMovies as fetchSimilarMovieService} from '../services/moviebymovieService';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { useAuthStore } from '../store/authStore';
 
 import { fetchRecommendations, updateRecommendations } from '../services/recommendationService';
-import { fetchPopularMovies } from '../services/moviesServices';
+import { fetchPopularMovies,fetchMovieById } from '../services/moviesServices';
 import { fetchGenres} from '../services/genresServices';
 import { fetchMoviesByGenres } from '../services/movieGenreService';
 import { Movie } from '../types';
+import CONFIG from '../config/config';
 
 type Genre = { id: number; name: string };
 
@@ -32,6 +33,7 @@ const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Para obtener los parámetros pasados desde la pantalla anterior
   const [movies, setMovies] = useState<any[]>([]); // Lista de películas relacionadas
+  const [similarMovies, setSimilarMovies] = useState<any[]>([]); 
   const [categories, setCategories] = useState<any[]>([]); 
   const [loading, setLoading] = useState<boolean>(true);
   const [initialLoading, setInitialLoading] = useState<boolean>(true);
@@ -44,6 +46,7 @@ const Home = () => {
   // Obtener las preferencias iniciales de los parámetros de ruta
   const initialSelectedMovies = route.params?.selectedMovies || [];
   const initialSelectedGenres = route.params?.selectedGenres || [];
+  const [likedMovieTitle, setLikedMovieTitle] = useState<string | null>(null);
  
   // const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
 const loadCategories = async () => {
@@ -55,7 +58,7 @@ const loadCategories = async () => {
     const categoriesWithMovies = await Promise.all(
       genresData.genres.map(async (genre: any) => {
         const movies = await fetchMoviesByGenres([genre.id]); 
-       // const movies = await fetchMoviesByGenres(genre.id);
+        //const movies = await fetchMoviesByGenres(genre.id);
         return {
           id: genre.id,
           name: genre.name,
@@ -71,6 +74,21 @@ const loadCategories = async () => {
     setCategories([]);
   }
 };
+/*useEffect(() => {
+  console.log('selectedGenres en Home:', selectedGenres);
+  if (selectedGenres && Array.isArray(selectedGenres) && selectedGenres.length > 0) {
+    fetchMoviesByGenres(selectedGenres)
+      .then(data => setMovies(data.results))
+      .catch(error => console.error('Error al cargar películas por géneros seleccionados:', error));
+  } else {
+    // Si no hay géneros seleccionados, puedes cargar películas populares por defecto
+    fetchPopularMovies()
+      .then(data => setMovies(data))
+      .catch(error => console.error('Error al cargar películas populares:', error));
+  }
+  setInitialLoading(false);
+}, [selectedGenres]);*/
+
 
 
 useEffect(() => {
@@ -95,7 +113,7 @@ useEffect(() => {
         {limit: 20}
       );
       setRecommendedMovies(response);
-      setUserLikes(initialSelectedMovies);
+    
 
     console.log("Recomendaciones del backend:", response);
       // 2. Filtrar películas duplicadas
@@ -105,11 +123,31 @@ useEffect(() => {
       );
 
       setMovies(uniqueMovies);
+      setUserLikes(initialSelectedMovies);
+      console.log("pelicula seleccionada:", initialSelectedMovies);
+      // Cargar películas similares a la primera película seleccionada (si hay alguna)
+      if (initialSelectedMovies.length > 0) {
+        const firstSelectedMovieId = initialSelectedMovies[0];
+        const similarMoviesData = await fetchSimilarMovieService(firstSelectedMovieId);
+        setSimilarMovies(similarMoviesData.results.slice(0, 10));
+
+        // Obtener el título de la primera película seleccionada para mostrar
+        try {
+          const movieDetails = await fetchMovieById(firstSelectedMovieId); // Usa la función del servicio
+          console.log('Título de la película que te gustó:', movieDetails.title);
+          setLikedMovieTitle(movieDetails.title);
+        } catch (error) {
+          console.error('Error al obtener detalles de la película:', error);
+        }
+      }
+
     } catch (error) {
       console.error('Error al cargar recomendaciones:', error);
       // Opcional: Mostrar películas por defecto si falla la recomendación
       const fallbackMovies = await fetchPopularMovies(); // Implementa esta función si es necesario
       setMovies(fallbackMovies);
+      setSimilarMovies([]);
+      setLikedMovieTitle(null);
     } finally {
       setLoading(false);
     }
@@ -155,6 +193,7 @@ useEffect(() => {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1B2A' }}>
         <Text style={{ color: '#FFF', fontSize: 18 }}>Cargando películas...</Text>
+        <ActivityIndicator size="large" color="#FFF" />
       </SafeAreaView>
     );
   }
@@ -180,24 +219,33 @@ useEffect(() => {
         <View style={styles.sectionLine} />
       </View>
 
-      {/* Sección "Tus géneros favoritos" */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Porque te gusto</Text>
-        <FlatList
-          horizontal
-          data={categories.filter((cat: any) => selectedGenres.includes(cat.id))}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => goToCategory(item)}>
-              <View style={styles.genrePill}>
-                <Text style={styles.genreText}>{item.name}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.horizontalList}
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
+       {/* Sección "Porque te gustó..." */}
+       {likedMovieTitle && similarMovies.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
+            <FlatList
+              horizontal
+              data={similarMovies}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+                >
+                  <Image
+                    source={{
+                      uri: item.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : 'https://via.placeholder.com/150x225'
+                    }}
+                    style={styles.horizontalPoster}
+                  />
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.horizontalList}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        )}
 
       {/* Sección "Recomendaciones basadas en tus gustos" */}
       <View style={styles.sectionContainer}>
@@ -428,6 +476,17 @@ const styles = StyleSheet.create({
   genreText: {
     color: '#FFF',
     fontWeight: 'bold',
+  },
+  loadingContainer: { // Agrega este estilo
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0A1B2A',
+  },
+  loadingText: { // Agrega este estilo
+    color: '#FFF',
+    fontSize: 18,
+    marginBottom: 20,
   },
 });
 
