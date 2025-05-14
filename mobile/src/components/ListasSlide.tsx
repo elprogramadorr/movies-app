@@ -12,6 +12,8 @@ import { addMovieToList } from '../services/listas/addMovieToList';
 import { deleteMovieFromList } from '../services/listas/deleteMovieFromList';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import firestore, { serverTimestamp } from '@react-native-firebase/firestore';
+
 
 interface ListasSlideProps {
   onClose: () => void;
@@ -22,21 +24,46 @@ const ListasSlide: React.FC<ListasSlideProps> = ({ onClose, movieId }) => {
   const [listas, setListas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLists, setSelectedLists] = useState<{ [key: string]: boolean }>({});
-
+  const userId = 'anonimo';
   useEffect(() => {
     const fetchLists = async () => {
       try {
         const data = await obtainLists();
+
+        // Obtener TODAS las películas guardadas en verMasTarde del usuario
+        const verMasTardeDocs = await firestore()
+          .collection('verMasTarde')
+          .where('userId', '==', userId)
+          .where('agregado', '==', true)
+          .get();
+
+        const peliculasVerMasTarde = verMasTardeDocs.docs.map(doc => doc.data().movieId);
+
+        // Verifica si esta película está marcada
+        const verMasTardeAgregado = peliculasVerMasTarde.includes(movieId);
+
+        // Crear manualmente la lista "Ver más tarde"
+        const verMasTardeLista = {
+          id: `verMasTarde_${userId}`,
+          nombreLista: 'Ver más tarde',
+          peliculas: peliculasVerMasTarde, // TODAS las películas
+          tipo: 'especial',
+        };
+
+        const listasCombinadas = [verMasTardeLista, ...data];
+
         console.log('Listas cargadas en ListasSlide:', data);
 
         // Inicializa el estado de las listas seleccionadas
-        const initialSelectedLists = data.reduce((acc: any, list: any) => {
+        // Inicializa el estado de seleccionadas
+        const initialSelectedLists = listasCombinadas.reduce((acc: any, list: any) => {
           acc[list.id] = list.peliculas?.includes(movieId) || false;
           return acc;
         }, {});
         setSelectedLists(initialSelectedLists);
 
-        setListas(data);
+        setListas(listasCombinadas);
+
       } catch (error) {
         console.error('Error al cargar las listas:', error);
       } finally {
@@ -51,39 +78,71 @@ const ListasSlide: React.FC<ListasSlideProps> = ({ onClose, movieId }) => {
     const isSelected = selectedLists[listId];
 
     try {
-      if (isSelected) {
-        // Si ya está seleccionado, elimina la película de la lista
-        await deleteMovieFromList(listId, movieId);
-        ToastAndroid.show('Película eliminada de la lista. ❌', ToastAndroid.SHORT);
+      if (listId.startsWith('verMasTarde')) {
+        const docRef = firestore().collection('verMasTarde').doc(`${userId}_${movieId}`);
 
-        // Actualiza el número de películas en la lista
-        setListas((prevListas) =>
-          prevListas.map((list) =>
+        if (isSelected) {
+          await docRef.delete();
+          ToastAndroid.show('Quitado de Ver más tarde ❌', ToastAndroid.SHORT);
+        } else {
+          await docRef.set({
+            userId,
+            movieId,
+            agregado: true,
+            timestamp: serverTimestamp(),
+          });
+          ToastAndroid.show('Agregado a Ver más tarde ➕', ToastAndroid.SHORT);
+        }
+
+        // Actualiza estado local
+        setSelectedLists(prev => ({
+          ...prev,
+          [listId]: !isSelected,
+        }));
+
+        setListas(prevListas =>
+          prevListas.map(list =>
             list.id === listId
-              ? { ...list, peliculas: list.peliculas.filter((id: string) => id !== movieId) }
+              ? {
+                  ...list,
+                  peliculas: isSelected
+                    ? list.peliculas.filter((id: string) => id !== movieId)
+                    : [...(list.peliculas || []), movieId],
+                }
               : list
           )
         );
-      } else {
-        // Si no está seleccionado, añade la película a la lista
-        await addMovieToList(listId, movieId);
-        ToastAndroid.show('Película añadida a la lista. ✅', ToastAndroid.SHORT);
 
-        // Actualiza el número de películas en la lista
-        setListas((prevListas) =>
-          prevListas.map((list) =>
-            list.id === listId
-              ? { ...list, peliculas: [...(list.peliculas || []), movieId] }
-              : list
-          )
-        );
+        return; // Ya se manejó este caso
       }
 
-      // Actualiza el estado de selección
-      setSelectedLists((prev) => ({
+      // 🔸 Listas personalizadas (normales)
+      if (isSelected) {
+        await deleteMovieFromList(listId, movieId);
+        ToastAndroid.show('Película eliminada de la lista. ❌', ToastAndroid.SHORT);
+      } else {
+        await addMovieToList(listId, movieId);
+        ToastAndroid.show('Película añadida a la lista. ✅', ToastAndroid.SHORT);
+      }
+
+      // Estado visual
+      setSelectedLists(prev => ({
         ...prev,
         [listId]: !isSelected,
       }));
+
+      setListas(prevListas =>
+        prevListas.map(list =>
+          list.id === listId
+            ? {
+                ...list,
+                peliculas: isSelected
+                  ? list.peliculas.filter((id: string) => id !== movieId)
+                  : [...(list.peliculas || []), movieId],
+              }
+            : list
+        )
+      );
     } catch (error) {
       console.error('Error al actualizar la lista:', error);
     }
