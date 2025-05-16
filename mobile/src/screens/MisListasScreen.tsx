@@ -10,7 +10,7 @@ import masTardeImg from '../assets/masTarde.png';
 import meGustaImg from '../assets/meGusta.png';
 import yaVistasImg from '../assets/yaVistas.png';
 import { ListItemComponent } from '../components/ListItemComponent.tsx';
-
+import { query, orderBy } from 'firebase/firestore';
 // Components
 import NavBar from '../components/NavBar';
 import { parse } from 'react-native-svg';
@@ -99,7 +99,13 @@ const MisListasScreen = () => {
           }
 
           try {
-            const snapshot = await getDocs(collection(db, collectionName));
+            
+            const q = query(
+              collection(db, collectionName),
+              orderBy(collectionName === 'me_gusta' ? 'fechaLike' : 'timestamp', 'desc')
+            );
+
+            const snapshot = await getDocs(q);
 
             // Obtener IDs de las películas según el campo correspondiente
             const peliculas = snapshot.docs

@@ -43,7 +43,7 @@ const MovieDetails = () => {
   const [activeTab, setActiveTab] = useState<string>('Detalles');
   const [liked, setLiked] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
-
+  const userId = "anonimo"; // Temporal hasta que manejar usuarios reales
   const snapPoints = useMemo(() => ['25%', '50%'], []); // Define los puntos de altura del BottomSheet
 
   const handleOpenBottomSheet = useCallback(() => {
@@ -69,13 +69,22 @@ const MovieDetails = () => {
           },
         );
         setMovieData(movieRes.data);
-        const docRef = doc(db, "me_gusta", movieId.toString());
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setLiked(true); // Ya estaba marcado como favorito
-        } else {
-          setLiked(false); // No estaba marcado
-        }  
+
+        try {
+          const likeDocRef = doc(db, "me_gusta", `${userId}_${movieId}`);
+          const likeDocSnap = await getDoc(likeDocRef);
+
+          if (likeDocSnap.exists()) {
+            console.log("Película marcada como me gusta.");
+            setLiked(true);
+          } else {
+            console.log("Película no marcada.");
+            setLiked(false);
+          }
+        } catch (err) {
+          console.error("Error al verificar si ya tenía me gusta:", err);
+        }
+//AGREGADO 2 LINEAS
 
         const videoRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos`,
@@ -169,8 +178,7 @@ const MovieDetails = () => {
       Alert.alert('Trailer no disponible', 'No se pudo encontrar el trailer.');
     }
   };
-  const docRef = doc(db, "me_gusta", movieId.toString());
-
+  const docRef = doc(db, "me_gusta", `${userId}_${movieId}`);
 
   const uniqueProviders = Array.from(
     new Map(allProviders.map(p => [p.provider_id, p])).values(),
@@ -231,12 +239,13 @@ const MovieDetails = () => {
                   setLiked(newStatus);
                 
                   try {
-                    const docRef = doc(db, "me_gusta", movieId.toString());
+                    const docRef = doc(db, "me_gusta", `${userId}_${movieId}`);
                 
                     if (newStatus) {
                       await setDoc(docRef, {
                         like: true,
                         id: movieId,
+                        userId,
                         nombre: movieData.title,
                         fechaLike: Timestamp.now(),
                       });
