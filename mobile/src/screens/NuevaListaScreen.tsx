@@ -1,23 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, FlatList } from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  FlatList,
+} from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types.ts';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../android/app/src/config/firebaseConfig';
-import { Image } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {RootStackParamList} from '../types.ts';
+import {collection, doc, setDoc, serverTimestamp} from 'firebase/firestore';
+import {db} from '../../android/app/src/config/firebaseConfig';
+import {Image} from 'react-native';
+import {useAuthStore} from '../store/useAuthStore';
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 const NuevaListaScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const user = useAuthStore(state => state.user);
+
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [titleError, setTitleError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
-  const [selectedMovies, setSelectedMovies] = useState<{ id: number; poster_path: string }[]>([]);
+  const [selectedMovies, setSelectedMovies] = useState<
+    {id: number; poster_path: string}[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   const handleTitleChange = (text: string) => {
@@ -47,12 +62,21 @@ const NuevaListaScreen = () => {
     try {
       setLoading(true);
 
-      const docRef = doc(collection(db, 'lista')); // Crea referencia con ID generado
+      if (!user) {
+        Alert.alert('Error', 'Usuario no autenticado');
+        return;
+      }
+
+      const userId = user.uid;
+
+      console.log('userID ', userId);
+
+      const docRef = doc(collection(db, 'users', user.uid, 'listas'));
       await setDoc(docRef, {
         idLista: docRef.id,
         nombreLista: title,
         descripcion: description,
-        peliculas: selectedMovies.map((movie) => movie.id),
+        peliculas: selectedMovies.map(movie => movie.id),
         fechaCreacion: serverTimestamp(),
       });
 
@@ -66,10 +90,14 @@ const NuevaListaScreen = () => {
     }
   };
 
-  const renderSelectedMovie = ({ item }: { item: { id: number; poster_path: string } }) => (
+  const renderSelectedMovie = ({
+    item,
+  }: {
+    item: {id: number; poster_path: string};
+  }) => (
     <View style={styles.imageContainer}>
       <Image
-        source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
+        source={{uri: `${IMAGE_BASE_URL}${item.poster_path}`}}
         style={styles.poster}
         resizeMode="cover"
       />
@@ -79,7 +107,9 @@ const NuevaListaScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} disabled={loading}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          disabled={loading}>
           <FontAwesome name="close" size={24} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nueva lista</Text>
@@ -109,12 +139,14 @@ const NuevaListaScreen = () => {
         value={description}
         onChangeText={handleDescriptionChange}
       />
-      {descriptionError ? <Text style={styles.errorText}>{descriptionError}</Text> : null}
+      {descriptionError ? (
+        <Text style={styles.errorText}>{descriptionError}</Text>
+      ) : null}
 
       {selectedMovies.length > 0 ? (
         <FlatList
           data={selectedMovies}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
           renderItem={renderSelectedMovie}
           numColumns={3}
           contentContainerStyle={styles.grid}
@@ -125,12 +157,13 @@ const NuevaListaScreen = () => {
           onPress={() =>
             navigation.navigate('AddMoviesList', {
               selectedMovies, // Pasar las películas seleccionadas
-              setSelectedMovies: (updatedMovies: { id: number; poster_path: string }[]) => {
+              setSelectedMovies: (
+                updatedMovies: {id: number; poster_path: string}[],
+              ) => {
                 setSelectedMovies(updatedMovies); // Actualizar las películas seleccionadas al regresar
               },
             })
-          }
-        >
+          }>
           <Text style={styles.addMovies}>Añadir películas...</Text>
         </TouchableOpacity>
       )}
