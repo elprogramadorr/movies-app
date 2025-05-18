@@ -83,9 +83,18 @@ const MisListasScreen = () => {
           };
         });
 
-        const sortedLists = fetchedLists.sort(
+        let sortedLists = fetchedLists.sort(
           (a, b) => b.fechaCreacion! - a.fechaCreacion!,
         );
+
+        console.log(sortedLists);
+
+        sortedLists = sortedLists.filter(element => {
+          if (element.id == 'me_gusta') return false;
+          if (element.id == 'vistos') return false;
+          if (element.id == 'ver_mas_tarde') return false;
+          return true;
+        });
         setFirebaseLists(sortedLists);
       },
     );
@@ -120,13 +129,25 @@ const MisListasScreen = () => {
       style={styles.item}
       onPress={async () => {
         try {
+          let currentTitle = item.title;
+
+          if (item.title == 'Favoritos') {
+            currentTitle = 'me_gusta';
+          }
+          if (item.title == 'Ver más tarde') {
+            currentTitle = 'ver_mas_tarde';
+          }
+          if (item.title == 'Películas ya vistas') {
+            currentTitle = 'vistos';
+          }
+
           const snapshot = await getDocs(
             collection(
               db,
               'users',
               user.uid,
               'listas',
-              item.title,
+              currentTitle,
               'peliculas',
             ),
           );
@@ -159,7 +180,9 @@ const MisListasScreen = () => {
         />
       ) : (
         <View style={styles.placeholderImage}>
-          <Text style={styles.placeholderText}>{item.title.charAt(0)}</Text>
+          <Text style={styles.placeholderText}>
+            {item.title ? item.title.charAt(0) : '#'}
+          </Text>
         </View>
       )}
       <View style={styles.textContainer}>

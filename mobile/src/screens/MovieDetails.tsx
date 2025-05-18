@@ -270,9 +270,7 @@ const MovieDetails = () => {
 
                       if (newStatus) {
                         await setDoc(movieRef, {
-                          id: movieId,
-                          nombre: movieData.title,
-                          fechaLike: Timestamp.now(),
+                          movieId,
                         });
                         ToastAndroid.show(
                           'Se agregó a tus favoritos. ❤️',

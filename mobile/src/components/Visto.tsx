@@ -1,23 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, Text, ToastAndroid, View } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {TouchableOpacity, Text, ToastAndroid, View} from 'react-native';
 
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import firestore, { firebase } from '@react-native-firebase/firestore';
-
+import firestore, {firebase} from '@react-native-firebase/firestore';
+import {useAuthStore} from '../store/useAuthStore';
+import {db} from '../../android/app/src/config/firebaseConfig';
+import {getDoc, setDoc, doc, deleteDoc, Timestamp} from 'firebase/firestore';
 
 type Props = {
   movieId: number;
   userId?: string;
 };
 
-const Visto = ({ movieId, userId = 'anonimo' }: Props) => {
+const Visto = ({movieId, userId = 'anonimo'}: Props) => {
+  const user = useAuthStore(state => state.user);
   const [visto, setVisto] = useState(false);
-  const docRef = firestore().collection('vistos').doc(`${userId}_${movieId}`);
-
+  const docRef = doc(
+    db,
+    'users',
+    user.uid,
+    'listas',
+    'vistos',
+    'peliculas',
+    movieId.toString(),
+  );
   useEffect(() => {
     const fetchEstado = async () => {
-      const doc = await docRef.get();
-      if (doc.exists && doc.data()?.visto) {
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
         setVisto(true);
       }
     };
@@ -28,25 +38,40 @@ const Visto = ({ movieId, userId = 'anonimo' }: Props) => {
     const nuevoEstado = !visto;
     setVisto(nuevoEstado);
 
-    if (nuevoEstado) {
-      // Marcar como visto → crear o actualizar el documento
-      await docRef.set({
-        userId,
-        movieId,
-        visto: true,
-        //timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-    } else {
-      // Marcar como no visto → eliminar el documento
-      await docRef.delete();
+    try {
+      const listRef = doc(db, 'users', user.uid, 'listas', 'vistos');
+
+      const listSnap = await getDoc(listRef);
+      if (!listSnap.exists()) {
+        await setDoc(listRef, {}); // lista vacía, sin metadatos
+      }
+
+      const movieRef = doc(
+        db,
+        'users',
+        user.uid,
+        'listas',
+        'vistos',
+        'peliculas',
+        movieId.toString(),
+      );
+
+      if (nuevoEstado) {
+        await setDoc(movieRef, {
+          id: movieId,
+        });
+      } else {
+        await deleteDoc(movieRef);
+      }
+
+      ToastAndroid.show(
+        nuevoEstado ? 'Agregado a vistos 👁️' : 'Quitado de vistos 🚫',
+        ToastAndroid.SHORT,
+      );
+    } catch (error) {
+      console.error('Error al actualizar vistos:', error);
     }
-
-    ToastAndroid.show(
-      nuevoEstado ? 'Agregado a vistos 👁️' : 'Quitado de vistos 🚫',
-      ToastAndroid.SHORT
-    );
   };
-
 
   return (
     <TouchableOpacity
@@ -61,14 +86,9 @@ const Visto = ({ movieId, userId = 'anonimo' }: Props) => {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-      }}
-    >
-      <FontAwesome
-        name={visto ? 'eye' : 'eye-slash'}
-        size={14}
-        color="white"
-      />
-      <Text style={{ color: 'white', fontSize: 12 }}>
+      }}>
+      <FontAwesome name={visto ? 'eye' : 'eye-slash'} size={14} color="white" />
+      <Text style={{color: 'white', fontSize: 12}}>
         {visto ? 'Visto' : 'No visto'}
       </Text>
     </TouchableOpacity>
