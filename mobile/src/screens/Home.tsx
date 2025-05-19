@@ -203,8 +203,6 @@ useEffect(() => {
           <FontAwesome name="search" size={24} color="#E0E1DD" />
         </TouchableOpacity>
       </View>
-
-
       {/* Otras categorías */}
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Descubre más categorías</Text>
@@ -224,40 +222,39 @@ useEffect(() => {
         />
       </View>
 
-
       {/* Sección "Tus recomendaciones" */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionText}>Tus recomendaciones</Text>
         <View style={styles.sectionLine} />
       </View>
 
-       {/* Sección "Porque te gustó..." */}
-       {likedMovieTitle && similarMovies.length > 0 && (
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
-            <FlatList
-              horizontal
-              data={similarMovies}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
-                >
-                  <Image
-                    source={{
-                      uri: item.poster_path
-                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                        : 'https://via.placeholder.com/150x225'
-                    }}
-                    style={styles.horizontalPoster}
-                  />
-                </TouchableOpacity>
-              )}
-              contentContainerStyle={styles.horizontalList}
-              showsHorizontalScrollIndicator={false}
-            />
-          </View>
-        )}
+      {/* Sección "Porque te gustó..." */}
+      {likedMovieTitle && similarMovies.length > 0 && (
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
+          <FlatList
+            horizontal
+            data={similarMovies}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+              >
+                <Image
+                  source={{
+                    uri: item.poster_path
+                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                      : 'https://via.placeholder.com/150x225'
+                  }}
+                  style={styles.horizontalPoster}
+                />
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.horizontalList}
+            showsHorizontalScrollIndicator={false}
+          />
+        </View>
+      )}
 
       {/* Sección "Recomendaciones basadas en tus gustos" */}
       <View style={styles.sectionContainer}>
@@ -352,12 +349,29 @@ useEffect(() => {
           )}
           numColumns={2}
           contentContainerStyle={styles.movieList}
+          ListFooterComponent={
+            <TouchableOpacity
+              style={styles.footerButton}
+              onPress={() =>
+                navigation.navigate('ContenidoLista', {
+                  nombreLista: 'Mis Películas Favoritas',
+                  descripcion: 'Esta es una lista de mis películas favoritas.',
+                  tiempoCreacion: '2025-05-06',
+                  peliculas: [950387, 1197306, 324544, 1045938, 1195506],
+                })
+              }
+            >
+              <Text style={styles.footerButtonText}>Ver Lista Completa</Text>
+            </TouchableOpacity>
+          }
         />
       </View>
+
+      {/* NavBar al final */}
+      <NavBar />
     </ScrollView>
   </SafeAreaView>
 );
-
 };
 
 const styles = StyleSheet.create({
@@ -420,7 +434,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
   },
-
   sectionHeader: {
     marginHorizontal: 16,
     marginBottom: 8,
@@ -492,6 +505,21 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 20,
   },
+  /**Borrar despues */
+  footerButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  footerButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  /**Borrar despues */
 });
 
 export default Home;

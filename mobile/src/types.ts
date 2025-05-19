@@ -3,7 +3,6 @@ export type RootStackParamList = {
     Home: { selectedMovies: number[] };
     PantallaBusqueda: undefined;
     GenresScreen: undefined;
-    MisListasScreen: undefined;
     seleccionarPeliculasGeneros: { selectedGenres: any[] };
     MovieDetails: { movieId: number };
 
@@ -13,6 +12,8 @@ export type RootStackParamList = {
       movies: Movie[]; // Usamos la interfaz Movie que ya tienes
     };
 
+    MisListasScreen: undefined;
+    AddMoviesList: { listId: string };
   };
   export interface Movie {
     id: number;
