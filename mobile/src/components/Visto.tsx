@@ -56,9 +56,11 @@ const Visto = ({movieId, userId = 'anonimo'}: Props) => {
         movieId.toString(),
       );
 
+      console.log('nuevo estado  ', nuevoEstado);
+
       if (nuevoEstado) {
         await setDoc(movieRef, {
-          id: movieId,
+          movieId,
         });
       } else {
         await deleteDoc(movieRef);
