@@ -12,7 +12,7 @@ import {useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from '../types.ts';
 import {collection, onSnapshot} from 'firebase/firestore';
 import {db} from '../../android/app/src/config/firebaseConfig';
-import {getDocs} from 'firebase/firestore';
+import {getDocs, setDoc, getDoc, doc} from 'firebase/firestore';
 import masTardeImg from '../assets/masTarde.png';
 import meGustaImg from '../assets/meGusta.png';
 import yaVistasImg from '../assets/yaVistas.png';
@@ -90,7 +90,7 @@ const MisListasScreen = () => {
         console.log(sortedLists);
 
         sortedLists = sortedLists.filter(element => {
-          if (element.id == 'me_gusta') return false;
+          if (element.title == 'Favoritos') return false;
           if (element.id == 'vistos') return false;
           if (element.id == 'ver_mas_tarde') return false;
           return true;
@@ -129,7 +129,7 @@ const MisListasScreen = () => {
       style={styles.item}
       onPress={async () => {
         try {
-          let currentTitle = item.title;
+          let currentTitle = item.id;
 
           if (item.title == 'Favoritos') {
             currentTitle = 'me_gusta';
@@ -139,6 +139,16 @@ const MisListasScreen = () => {
           }
           if (item.title == 'Películas ya vistas') {
             currentTitle = 'vistos';
+          }
+
+          const listaRef = doc(db, 'users', user.uid, 'listas', currentTitle);
+
+          const listaSnap = await getDoc(listaRef);
+
+          if (!listaSnap.exists()) {
+            await setDoc(listaRef, {
+              fechaCreacion: new Date(), // Podés ajustar este campo si querés
+            });
           }
 
           const snapshot = await getDocs(
@@ -155,20 +165,34 @@ const MisListasScreen = () => {
           const peliculas = snapshot.docs
             .map(doc => {
               const data = doc.data();
-              // Intentamos encontrar cualquier campo con un ID numérico válido
               const id = data.movieId ?? data.id;
               return typeof id === 'string' ? parseInt(id) : id;
             })
             .filter(id => typeof id === 'number' && !isNaN(id));
 
-          navigation.navigate('ContenidoLista', {
-            nombreLista: item.title,
-            descripcion: item.description ?? 'Lista autogenerada',
-            tiempoCreacion: item.fechaCreacion
-              ? formatTimestamp(item.fechaCreacion)
-              : 'Sin fecha',
-            peliculas: peliculas,
-          });
+          console.log('pelisisi  ', peliculas);
+          console.log('item  ', item);
+          console.log('pelicula ', item.peliculas);
+
+          if (peliculas.length > 0) {
+            navigation.navigate('ContenidoLista', {
+              nombreLista: item.title,
+              descripcion: item.description ?? 'Lista autogenerada',
+              tiempoCreacion: item.fechaCreacion
+                ? formatTimestamp(item.fechaCreacion)
+                : 'Sin fecha',
+              peliculas: peliculas,
+            });
+          } else {
+            navigation.navigate('ContenidoLista', {
+              nombreLista: item.title,
+              descripcion: item.description ?? 'Lista autogenerada',
+              tiempoCreacion: item.fechaCreacion
+                ? formatTimestamp(item.fechaCreacion)
+                : 'Sin fecha',
+              peliculas: item.peliculas,
+            });
+          }
         } catch (error) {
           console.error('Error al obtener películas de la lista:', error);
         }
