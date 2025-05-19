@@ -52,6 +52,8 @@ const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
         }, {});
         setSelectedLists(initialSelectedLists);
 
+        console.log('estas son las que renderizo');
+        console.log(initialSelectedLists);
         setListas(data);
       } catch (error) {
         console.error('Error al cargar las listas:', error);
@@ -142,7 +144,9 @@ const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
                   style={styles.icon}
                 />
                 <View>
-                  <Text style={styles.listTitle}>{item.nombreLista}</Text>
+                  <Text style={styles.listTitle}>
+                    {item.nombreLista ? item.nombreLista : 'Ver más tarde'}
+                  </Text>
                   <Text style={styles.listDescription}>
                     {item.peliculas ? item.peliculas.length : 0} películas
                   </Text>
