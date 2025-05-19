@@ -15,7 +15,7 @@ export const obtainLists = async (userID: string): Promise<any[]> => {
     if (!verMasTardeExiste) {
       const nuevaRef = doc(db, 'users', userID, 'listas', 'ver_mas_tarde');
       await setDoc(nuevaRef, {
-        title: 'Ver máis tarde',
+        title: 'Ver más tarde',
         fechaCreacion: new Date(),
         description: 'Películas guardadas para ver luego',
         nombreLista: 'Ver más tarde',
