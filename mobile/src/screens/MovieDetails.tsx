@@ -20,8 +20,13 @@ import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
+import { ToastAndroid } from 'react-native';
+import { getDoc, setDoc, doc, deleteDoc } from "firebase/firestore";
+import { db } from "../../android/app/src/config/firebaseConfig";
+import { Timestamp } from "firebase/firestore";
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
+
 
 const MovieDetails = () => {
   const route = useRoute<MovieDetailsRouteProp>();
@@ -30,7 +35,7 @@ const MovieDetails = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('Detalles');
-
+  const [liked, setLiked] = useState(false);
   useEffect(() => {
     const fetchMovieDetails = async () => {
       try {
@@ -45,6 +50,13 @@ const MovieDetails = () => {
           },
         );
         setMovieData(movieRes.data);
+        const docRef = doc(db, "me_gusta", movieId.toString());
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setLiked(true); // Ya estaba marcado como favorito
+        } else {
+          setLiked(false); // No estaba marcado
+        }  
 
         const videoRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos`,
@@ -138,6 +150,8 @@ const MovieDetails = () => {
       Alert.alert('Trailer no disponible', 'No se pudo encontrar el trailer.');
     }
   };
+  const docRef = doc(db, "me_gusta", movieId.toString());
+
 
   const uniqueProviders = Array.from(
     new Map(allProviders.map(p => [p.provider_id, p])).values(),
@@ -183,10 +197,45 @@ const MovieDetails = () => {
                 <FontAwesome name="play-circle" size={14} color="white" />
                 <Text style={styles.buttonText}>Trailer</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.likeButton]}>
-                <AntDesign name="heart" size={14} color="#E63946" />
-                <Text style={styles.buttonText}>Te gusta</Text>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.likeButton,
+                ]}
+                onPress={async () => {
+                  const newStatus = !liked;
+                  setLiked(newStatus);
+                
+                  try {
+                    const docRef = doc(db, "me_gusta", movieId.toString());
+                
+                    if (newStatus) {
+                      await setDoc(docRef, {
+                        like: true,
+                        id: movieId,
+                        nombre: movieData.title,
+                        fechaLike: Timestamp.now(),
+                      });
+                      ToastAndroid.show('Se agregó a tus favoritos. ❤️', ToastAndroid.SHORT);
+                    } else {
+                      await deleteDoc(docRef);
+                      ToastAndroid.show('Se eliminó de tus favoritos. ❌', ToastAndroid.SHORT);
+                    }
+                  } catch (error) {
+                    console.error("Error al actualizar favoritos:", error);
+                  }
+                }}                
+              >
+                <AntDesign
+                  name={liked ? 'heart' : 'hearto'}
+                  size={14}
+                  color={liked ? '#E63946' : 'white'}
+                />
+                <Text style={styles.buttonText}>
+                  {liked ? 'Te gusta' : 'Me gusta'}
+                </Text>
               </TouchableOpacity>
+
             </View>
           </View>
 

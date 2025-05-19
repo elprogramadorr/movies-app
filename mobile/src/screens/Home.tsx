@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Button,
   FlatList,
   Image,
   ScrollView,
@@ -13,10 +12,13 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { RootStackParamList } from '../types.ts';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+
 import { fetchSimilarMovies as fetchSimilarMovieService} from '../services/moviebymovieService';
+
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import NavBar from '../components/NavBar.tsx'; 
 
 import { useAuthStore } from '../store/authStore';
 
@@ -30,11 +32,13 @@ import CONFIG from '../config/config';
 type Genre = { id: number; name: string };
 
 const Home = () => {
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Para obtener los parámetros pasados desde la pantalla anterior
   const [movies, setMovies] = useState<any[]>([]); // Lista de películas relacionadas
   const [similarMovies, setSimilarMovies] = useState<any[]>([]); 
   const [categories, setCategories] = useState<any[]>([]); 
+
   const [loading, setLoading] = useState<boolean>(true);
   const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
@@ -74,6 +78,7 @@ const loadCategories = async () => {
     setCategories([]);
   }
 };
+
 
 
 
@@ -119,6 +124,7 @@ useEffect(() => {
           setLikedMovieTitle(movieDetails.title);
         } catch (error) {
           console.error('Error al obtener detalles de la película:', error);
+
         }
       }
 
@@ -172,20 +178,24 @@ useEffect(() => {
 
   if (loading) {
     return (
+
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1B2A' }}>
         <Text style={{ color: '#FFF', fontSize: 18 }}>Cargando películas...</Text>
         <ActivityIndicator size="large" color="#FFF" />
+
       </SafeAreaView>
     );
   }
 
   return (
+
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
     <ScrollView>
       {/* Header */}
       <View style={styles.headerContainer}>
         <Image
           source={require('../assets/icono.png')} 
+
           style={styles.image}
         />
         <Text style={styles.title}>¡BIENVENIDO!</Text>
@@ -193,6 +203,7 @@ useEffect(() => {
           <FontAwesome name="search" size={24} color="#E0E1DD" />
         </TouchableOpacity>
       </View>
+
 
       {/* Otras categorías */}
       <View style={styles.sectionContainer}>
@@ -346,9 +357,24 @@ useEffect(() => {
     </ScrollView>
   </SafeAreaView>
 );
+
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0A1B2A',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0A1B2A',
+  },
+  loadingText: {
+    color: '#FFF',
+    fontSize: 18,
+  },
   headerContainer: {
     paddingHorizontal: 20,
     paddingVertical: 15,
@@ -357,17 +383,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  sideSpace: {
-    width: 24,
-  },
   title: {
     fontSize: 16,
     color: '#FFF',
-    fontWeight: 'bold',
-  },
-  searchText: {
-    fontSize: 16,
-    color: '#E0E1DD',
     fontWeight: 'bold',
   },
   movieList: {
@@ -375,11 +393,11 @@ const styles = StyleSheet.create({
   },
   movieItem: {
     flex: 1,
-    margin: 8, 
+    margin: 8,
     alignItems: 'center',
   },
   poster: {
-    width: 150, 
+    width: 150,
     height: 225,
     borderRadius: 8,
     marginBottom: 8,
@@ -392,16 +410,17 @@ const styles = StyleSheet.create({
     width: 150,
   },
   movieRating: {
-    color: '#FFD700', // Color dorado para la estrella
+    color: '#FFD700',
     fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 4, // Espaciado entre el título y la puntuación
+    marginTop: 4,
   },
   image: {
     width: 50,
     height: 50,
   },
+
   sectionHeader: {
     marginHorizontal: 16,
     marginBottom: 8,

@@ -1,28 +1,28 @@
-import MovieDetailsScreen from './screens/MovieDetailsScreen';
-import firebase from '@react-native-firebase/app';
-import firestore from '@react-native-firebase/firestore';
 import React, {useEffect, useState} from 'react';
+import {View, Text, StyleSheet} from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import MovieDetails from './screens/MovieDetails';
-import Splash from './screens/Splash';
-import { Header } from 'react-native/Libraries/NewAppScreen';
-import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
-import Home from './screens/Home';
+
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-import {RootStackParamList} from './types'; // ajustá la ruta si está en src/navigation/types.ts
-
-import PantallaBusqueda from './screens/PantallaBusqueda';
+import Splash from './screens/Splash';
+import Home from './screens/Home';
+import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
 import CategoryScreen from './screens/CategoryScreen';
+import MovieDetails from './screens/MovieDetails';
+import PantallaBusqueda from './screens/PantallaBusqueda';
+import MisListasScreen from './screens/MisListasScreen';
+import NuevaListaScreen from './screens/NuevaListaScreen';
 
-//const Stack = createNativeStackNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [showReconnectBanner, setShowReconnectBanner] = useState(false);
 
   useEffect(() => {
     FontAwesome.loadFont();
@@ -31,56 +31,115 @@ const App = () => {
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+
+    const checkInitialConnection = async () => {
+      const state = await NetInfo.fetch();
+      setIsConnected(state.isConnected);
+    };
+
+    checkInitialConnection();
+
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (isConnected === false && state.isConnected === true) {
+        // Se reconectó
+        setShowReconnectBanner(true);
+        setTimeout(() => {
+          setShowReconnectBanner(false);
+        }, 5000); // Mostrar 5 segundos
+      }
+      setIsConnected(state.isConnected);
+    });
+
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [isConnected]);
+
+  if (isConnected === null) {
+    return null;
+  }
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator 
-        screenOptions={{
-          headerShown: false,
-          headerStyle: {
-            backgroundColor: '#0D1B2A', // Color de fondo del header
-          },
-          headerTintColor: '#FFF', // Color del texto del header
-        }}
-      >
-        {isLoading ? (
-          <Stack.Screen name="Splash" component={Splash} />
-        ) : (
-          <>
-            <Stack.Screen
-              name="Home"
-              component={Home}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen name="MovieDetailsScreen" component={MovieDetailsScreen} />
-            <Stack.Screen name="GenresScreen" component={GenresScreen} />
-            <Stack.Screen name="seleccionarPeliculasGeneros" component={SeleccionarPeliculasGeneros} />
-            <Stack.Screen
-              name="MovieDetails"
-              component={MovieDetails}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="PantallaBusqueda"
-              component={PantallaBusqueda}
-              options={{headerShown: false, title: 'Buscar Películas'}}
-            />
-            {/* Nueva pantalla de categorías */}
-            <Stack.Screen
-              name="CategoryScreen"
+    <View style={{flex: 1}}>
+      {!isConnected && (
+        <View style={[styles.banner, {backgroundColor: '#D9534F'}]}>
+          <Text style={styles.bannerText}>🚫 Sin conexión a internet</Text>
+        </View>
+      )}
+
+      {showReconnectBanner && (
+        <View style={[styles.banner, {backgroundColor: '#5cb85c'}]}>
+          <Text style={styles.bannerText}>✅ ¡Conexión restablecida!</Text>
+        </View>
+      )}
+
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            headerStyle: {
+              backgroundColor: '#0D1B2A', // Color de fondo del header
+            },
+            headerTintColor: '#FFF', // Color del texto del header
+          }}
+        >
+          {isLoading ? (
+            <Stack.Screen name="Splash" component={Splash} />
+          ) : (
+            <>
+              <Stack.Screen
+                name="Home"
+                component={Home}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen name="GenresScreen" component={GenresScreen} />
+              <Stack.Screen 
+                name="seleccionarPeliculasGeneros" 
+                component={SeleccionarPeliculasGeneros} 
+              />
+              <Stack.Screen 
+                name="MovieDetails" 
+                component={MovieDetails}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="PantallaBusqueda"
+                component={PantallaBusqueda}
+                options={{headerShown: false, title: 'Buscar Películas'}}
+              />
+              <Stack.Screen
+                name="CategoryScreen"
                 component={CategoryScreen} 
                 options={({ route }: { route: { params: RootStackParamList['CategoryScreen'] } }) => ({
-                title: route.params?.categoryName || 'Categoría',
-                headerShown: true // Mostrar header solo para esta pantalla
-              })}
-            />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+                  title: route.params?.categoryName || 'Categoría',
+                  headerShown: true // Mostrar header solo para esta pantalla
+                })}
+              />
+              <Stack.Screen name="MisListasScreen" component={MisListasScreen} />
+              <Stack.Screen name="NuevaLista" component={NuevaListaScreen} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
   );
-
 };
+
+const styles = StyleSheet.create({
+  banner: {
+    padding: 8,
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  bannerText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
 
 export default App;
