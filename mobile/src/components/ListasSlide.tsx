@@ -52,6 +52,8 @@ const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
         }, {});
         setSelectedLists(initialSelectedLists);
 
+        console.log('estas son las que renderizo');
+        console.log(initialSelectedLists);
         setListas(data);
       } catch (error) {
         console.error('Error al cargar las listas:', error);

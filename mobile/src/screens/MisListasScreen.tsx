@@ -87,14 +87,32 @@ const MisListasScreen = () => {
           (a, b) => b.fechaCreacion! - a.fechaCreacion!,
         );
 
-        console.log(sortedLists);
+        console.log('listitas ', sortedLists);
 
         sortedLists = sortedLists.filter(element => {
-          if (element.title == 'Favoritos') return false;
-          if (element.id == 'vistos') return false;
-          if (element.id == 'ver_mas_tarde') return false;
+          if (
+            element.title == 'Favoritos' ||
+            element.title == 'Películas ya vistas'
+          )
+            return false;
+          if (element.id == '2' || element.title == 'Ver más tarde')
+            return false;
+
+          if (
+            element.id == 'me_gusta' ||
+            element.title == 'Favoritos' ||
+            element.id == 'ver_mas_tarde' ||
+            element.title == 'Películas ya vistas'
+          )
+            return false;
+          if (element.id == 'vistos' || element.title == 'Ver más tarde')
+            return false;
+
           return true;
         });
+
+        console.log('renderizar  ', sortedLists);
+
         setFirebaseLists(sortedLists);
       },
     );
@@ -134,11 +152,14 @@ const MisListasScreen = () => {
           if (item.title == 'Favoritos') {
             currentTitle = 'me_gusta';
           }
-          if (item.title == 'Ver más tarde') {
-            currentTitle = 'ver_mas_tarde';
-          }
+
           if (item.title == 'Películas ya vistas') {
             currentTitle = 'vistos';
+          }
+
+          if (item.id == '1') {
+            currentTitle = 'ver_mas_tarde';
+            console.log('say');
           }
 
           const listaRef = doc(db, 'users', user.uid, 'listas', currentTitle);
@@ -162,7 +183,7 @@ const MisListasScreen = () => {
             ),
           );
 
-          const peliculas = snapshot.docs
+          let peliculas = snapshot.docs
             .map(doc => {
               const data = doc.data();
               const id = data.movieId ?? data.id;
@@ -173,6 +194,27 @@ const MisListasScreen = () => {
           console.log('pelisisi  ', peliculas);
           console.log('item  ', item);
           console.log('pelicula ', item.peliculas);
+
+          if (currentTitle == 'ver_mas_tarde') {
+            const listRef = doc(
+              db,
+              'users',
+              String(user.uid),
+              'listas',
+              'ver_mas_tarde',
+            );
+
+            const listDoc = await getDoc(listRef);
+
+            if (listDoc.exists()) {
+              const data = listDoc.data();
+              peliculas = data.peliculas || []; // array de IDs
+            } else {
+              peliculas = [];
+              console.warn('La lista Ver más tarde no existe');
+            }
+            console.log('ver mas tarde  ', peliculas);
+          }
 
           if (peliculas.length > 0) {
             navigation.navigate('ContenidoLista', {

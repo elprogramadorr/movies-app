@@ -1,23 +1,42 @@
 import {db} from '../../../android/app/src/config/firebaseConfig';
-import {collection, getDocs} from 'firebase/firestore';
+import {collection, getDocs, doc, setDoc} from 'firebase/firestore';
 
-/**
- * Obtiene todas las listas de Firestore.
- * @returns Promesa que resuelve con un array de listas.
- */
 export const obtainLists = async (userID: string): Promise<any[]> => {
   try {
-    // Consulta las listas del usuario específico
-    const querySnapshot = await getDocs(
-      collection(db, 'users', userID, 'listas'),
+    const listasRef = collection(db, 'users', userID, 'listas');
+    const querySnapshot = await getDocs(listasRef);
+
+    // Verificar si "ver_mas_tarde" existe
+    const verMasTardeExiste = querySnapshot.docs.some(
+      doc => doc.id === 'ver_mas_tarde',
     );
 
-    const lists = querySnapshot.docs.map(doc => ({
-      id: doc.id, // ID del documento
-      ...doc.data(), // Datos del documento
+    // Si no existe, crearla
+    if (!verMasTardeExiste) {
+      const nuevaRef = doc(db, 'users', userID, 'listas', 'ver_mas_tarde');
+      await setDoc(nuevaRef, {
+        title: 'Ver máis tarde',
+        fechaCreacion: new Date(),
+        description: 'Películas guardadas para ver luego',
+        nombreLista: 'Ver más tarde',
+      });
+    }
+
+    let lists = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
     }));
 
-    console.log('Listas obtenidas:', lists); // Verifica las listas en la consola
+    // Filtrar listas autogeneradas
+    lists = lists.filter(item => {
+      return item.id !== 'me_gusta' && item.id !== 'vistos';
+    });
+
+    lists.sort((a, b) =>
+      a.id === 'ver_mas_tarde' ? -1 : b.id === 'ver_mas_tarde' ? 1 : 0,
+    );
+
+    console.log('Listas obtenidas:', lists);
     return lists;
   } catch (error) {
     console.error('Error al obtener las listas:', error);
