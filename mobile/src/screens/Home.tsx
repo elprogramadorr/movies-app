@@ -17,13 +17,18 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 
 import { fetchSimilarMovies as fetchSimilarMovieService} from '../services/moviebymovieService';
 
+
+import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
+
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import NavBar from '../components/NavBar.tsx'; 
 
 import { useAuthStore } from '../store/authStore';
 
 import { fetchRecommendations, updateRecommendations } from '../services/recommendationService';
-import { fetchPopularMovies,fetchMovieById } from '../services/moviesServices';
+//import { fetchPopularMovies,fetchMovieById } from '../services/moviesServices';
+import { fetchMovieById, fetchSimilarMovies, fetchPopularMovies } from '../services/moviesServices';
 import { fetchGenres} from '../services/genresServices';
 import { fetchMoviesByGenres } from '../services/movieGenreService';
 import { Movie } from '../types';
@@ -32,125 +37,141 @@ import CONFIG from '../config/config';
 type Genre = { id: number; name: string };
 
 const Home = () => {
-
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute<RouteProp<RootStackParamList, 'Home'>>(); // Para obtener los parámetros pasados desde la pantalla anterior
-  const [movies, setMovies] = useState<any[]>([]); // Lista de películas relacionadas
-  const [similarMovies, setSimilarMovies] = useState<any[]>([]); 
-  const [categories, setCategories] = useState<any[]>([]); 
-
+  const route = useRoute<RouteProp<RootStackParamList, 'Home'>>();
+  
+  // Estados combinados
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [similarMovies, setSimilarMovies] = useState<Movie[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [initialLoading, setInitialLoading] = useState<boolean>(true);
-
-  const selectedMovies = route.params?.selectedMovies || [];// IDs de las películas seleccionadas
-  const selectedGenres = route.params?.selectedGenres || [];
+  const [selectedMovies, setSelectedMovies] = useState<number[]>([]);
+  const [selectedMoviesLoaded, setSelectedMoviesLoaded] = useState<boolean>(false);
   const [userLikes, setUserLikes] = useState<number[]>([]);
   const [recommendedMovies, setRecommendedMovies] = useState<Movie[]>([]);
- 
-  // Obtener las preferencias iniciales de los parámetros de ruta
+  const [likedMovieTitle, setLikedMovieTitle] = useState<string | null>(null);
+
+  // Obtener parámetros de ruta
   const initialSelectedMovies = route.params?.selectedMovies || [];
   const initialSelectedGenres = route.params?.selectedGenres || [];
-  const [likedMovieTitle, setLikedMovieTitle] = useState<string | null>(null);
- 
-  // const { searchHistory } = useAuthStore(); // Asume que guardas el historial aquí
-const loadCategories = async () => {
-  try {
-    // 1. Obtener géneros/categorías desde la API
-    const genresData = await fetchGenres();
-    
-    // 2. Para cada género, obtener películas populares
-    const categoriesWithMovies = await Promise.all(
-      genresData.genres.map(async (genre: any) => {
-        const movies = await fetchMoviesByGenres([genre.id]); 
-        //const movies = await fetchMoviesByGenres(genre.id);
-        return {
-          id: genre.id,
-          name: genre.name,
-          movies: movies.results.slice(0, 10) // Tomamos las primeras 10 películas
-        };
-      })
-    );
-    
-    setCategories(categoriesWithMovies);
-  } catch (error) {
-    console.error('Error al cargar categorías:', error);
-    // Puedes mostrar categorías por defecto si falla
-    setCategories([]);
-  }
-};
+  const selectedGenres = route.params?.selectedGenres || [];
 
+  // Cargar categorías de películas
+  const loadCategories = async () => {
+    try {
+      const genresData = await fetchGenres();
+      const categoriesWithMovies = await Promise.all(
+        genresData.genres.map(async (genre: Genre) => {
+          const movies = await fetchMoviesByGenres([genre.id]);
+          return {
+            id: genre.id,
+            name: genre.name,
+            movies: movies.results.slice(0, 10)
+          };
+        })
+      );
+      setCategories(categoriesWithMovies);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+      setCategories([]);
+    }
+  };
 
+  // Obtener películas seleccionadas del usuario desde Firestore
+  const fetchSelectedMovies = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
 
+      if (!user) {
+        Alert.alert('Error', 'No se encontró un usuario autenticado.');
+        return;
+      }
 
-useEffect(() => {
+      const firestore = getFirestore();
+      const userDoc = doc(firestore, 'users', user.uid);
+      const userSnapshot = await getDoc(userDoc);
+
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data();
+        const movies = userData?.selectedMovies || [];
+        setSelectedMovies(movies);
+        setUserLikes(movies); // Establecer likes iniciales
+      } else {
+        navigation.navigate('seleccionarGustos');
+      }
+    } catch (error) {
+      console.error('Error al obtener las películas seleccionadas:', error);
+      navigation.navigate('seleccionarGustos');
+    } finally {
+      setSelectedMoviesLoaded(true);
+    }
+  };
+
+  // Cargar recomendaciones de películas
   const loadRecommendations = async () => {
     try {
-
-
-      // Cargar categorías basadas en los géneros seleccionados
       await loadCategories();
-      // 1. Obtener recomendaciones del backend
       const response = await fetchRecommendations(
         selectedMovies,
-       // selectedGenres.map((g: Genre) => g.id),
-        //likedMovies,
-        //searchHistory
-        //selectedGenres,
-        {limit: 20}
+        { limit: 20 }
       );
       setRecommendedMovies(response);
-    
 
-    console.log("Recomendaciones del backend:", response);
-      // 2. Filtrar películas duplicadas
       const uniqueMovies = response.filter(
-        (movie: any, index: number, self: any[]) =>
+        (movie: Movie, index: number, self: Movie[]) =>
           index === self.findIndex((m) => m.id === movie.id)
       );
 
       setMovies(uniqueMovies);
-      setUserLikes(initialSelectedMovies);
-      console.log("pelicula seleccionada:", initialSelectedMovies);
-      // Cargar películas similares a la primera película seleccionada (si hay alguna)
-      if (initialSelectedMovies.length > 0) {
-        const firstSelectedMovieId = initialSelectedMovies[0];
+      setUserLikes(selectedMovies);
+
+      if (selectedMovies.length > 0) {
+        const firstSelectedMovieId = selectedMovies[0];
         const similarMoviesData = await fetchSimilarMovieService(firstSelectedMovieId);
         setSimilarMovies(similarMoviesData.results.slice(0, 10));
 
-        // Obtener el título de la primera película seleccionada para mostrar
         try {
-          const movieDetails = await fetchMovieById(firstSelectedMovieId); // Usa la función del servicio
-          console.log('Título de la película que te gustó:', movieDetails.title);
+          const movieDetails = await fetchMovieById(firstSelectedMovieId);
           setLikedMovieTitle(movieDetails.title);
         } catch (error) {
           console.error('Error al obtener detalles de la película:', error);
-
         }
       }
-
     } catch (error) {
       console.error('Error al cargar recomendaciones:', error);
-      // Opcional: Mostrar películas por defecto si falla la recomendación
-      const fallbackMovies = await fetchPopularMovies(); // Implementa esta función si es necesario
+      const fallbackMovies = await fetchPopularMovies();
       setMovies(fallbackMovies);
       setSimilarMovies([]);
       setLikedMovieTitle(null);
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
-  if (selectedMovies.length > 0) {
-    loadRecommendations();
-  } else {
-    navigation.navigate('GenresScreen');
-  }
-}, [selectedMovies, selectedGenres, navigation]);
+  // Cargar películas similares
+  const loadMovies = async () => {
+    try {
+      const allMovies: Movie[] = [];
+      for (const movieId of selectedMovies) {
+        const data = await fetchSimilarMovies(movieId);
+        allMovies.push(...data.results);
+      }
+      setMovies(allMovies);
+    } catch (error) {
+      console.error('Error al cargar las películas relacionadas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
+  // Navegación
   const goToPantallaBusqueda = () => {
     navigation.navigate('PantallaBusqueda');
   };
+
   const goToCategory = (category: any) => {
     navigation.navigate('CategoryScreen', { 
       categoryId: category.id,
@@ -159,30 +180,42 @@ useEffect(() => {
     });
   };
 
-  // Manejar cuando el usuario da like a una película
+  // Manejar likes de películas
   const handleLikeMovie = async (movieId: number) => {
     try {
-      // Actualizar el estado local primero para una respuesta rápida
       setUserLikes(prev => [...prev, movieId]);
-      
-      // Obtener recomendaciones actualizadas del backend
-      const updatedRecs = await updateRecommendations(userLikes, movieId);
+      const updatedRecs = await fetchRecommendations([...userLikes, movieId], { limit: 20 });
       setRecommendedMovies(updatedRecs);
-      
     } catch (error) {
       console.error('Error updating recommendations:', error);
-      // Revertir el like si falla
       setUserLikes(prev => prev.filter(id => id !== movieId));
     }
   };
 
-  if (loading) {
+  // Efectos
+  useEffect(() => {
+    fetchSelectedMovies();
+  }, []);
+
+  useEffect(() => {
+    if (selectedMoviesLoaded) {
+      if (selectedMovies.length > 0) {
+        loadRecommendations();
+        loadMovies();
+      } else {
+        setLoading(false);
+        setInitialLoading(false);
+        navigation.navigate('GenresScreen');
+      }
+    }
+  }, [selectedMovies, selectedMoviesLoaded]);
+
+  // Renderizado de carga
+  if (loading || initialLoading) {
     return (
-
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1B2A' }}>
-        <Text style={{ color: '#FFF', fontSize: 18 }}>Cargando películas...</Text>
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Cargando películas...</Text>
         <ActivityIndicator size="large" color="#FFF" />
-
       </SafeAreaView>
     );
   }
@@ -402,7 +435,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: 'bold',
   },
-  movieList: {
+    movieList: {
     padding: 16,
   },
   movieItem: {

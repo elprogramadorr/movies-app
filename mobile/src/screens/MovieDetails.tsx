@@ -21,18 +21,21 @@ import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
 import Actor from '../components/Actor';
-import { ToastAndroid } from 'react-native';
-import { getDoc, setDoc, doc, deleteDoc } from "firebase/firestore";
-import { db } from "../../android/app/src/config/firebaseConfig";
-import { Timestamp } from "firebase/firestore";
+import Visto from '../components/Visto';
+import VerMasTarde from '../components/VerMasTarde';
+import {ToastAndroid} from 'react-native';
+import {getDoc, setDoc, doc, deleteDoc} from 'firebase/firestore';
+import {db} from '../../android/app/src/config/firebaseConfig';
+import {Timestamp} from 'firebase/firestore';
+import {useAuthStore} from '../store/useAuthStore';
 import ListasSlide from '../components/ListasSlide';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
-import { opacity } from 'react-native-reanimated/lib/typescript/Colors';
+import {opacity} from 'react-native-reanimated/lib/typescript/Colors';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
-
 const MovieDetails = () => {
+  const user = useAuthStore(state => state.user);
   const route = useRoute<MovieDetailsRouteProp>();
   const {movieId} = route.params;
   const [movieData, setMovieData] = useState<any>(null);
@@ -67,13 +70,23 @@ const MovieDetails = () => {
           },
         );
         setMovieData(movieRes.data);
-        const docRef = doc(db, "me_gusta", movieId.toString());
+        const docRef = doc(
+          db,
+          'users',
+          user.uid,
+          'listas',
+          'me_gusta',
+          'peliculas',
+          movieId.toString(),
+        );
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
+          console.log('ya existita');
           setLiked(true); // Ya estaba marcado como favorito
         } else {
+          console.log('no existita');
           setLiked(false); // No estaba marcado
-        }  
+        }
 
         const videoRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos`,
@@ -167,17 +180,14 @@ const MovieDetails = () => {
       Alert.alert('Trailer no disponible', 'No se pudo encontrar el trailer.');
     }
   };
-  const docRef = doc(db, "me_gusta", movieId.toString());
-
+  const docRef = doc(db, 'users', user.uid, 'me_gusta', movieId.toString());
 
   const uniqueProviders = Array.from(
     new Map(allProviders.map(p => [p.provider_id, p])).values(),
   );
 
   return (
-    
     <SafeAreaView style={styles.container}>
-      
       <ScrollView style={styles.scrollView}>
         <View style={styles.backdropContainer}>
           <Image source={{uri: backdropUrl}} style={styles.backdropImage} />
@@ -211,57 +221,96 @@ const MovieDetails = () => {
               </Text>
             </View>
 
-            <View style={styles.buttonsContainer}>
-              <TouchableOpacity style={styles.button} onPress={openTrailer}>
-                <FontAwesome name="play-circle" size={14} color="white" />
-                <Text style={styles.buttonText}>Trailer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.likeButton,
-                ]}
-                onPress={async () => {
-                  const newStatus = !liked;
-                  setLiked(newStatus);
-                
-                  try {
-                    const docRef = doc(db, "me_gusta", movieId.toString());
-                
-                    if (newStatus) {
-                      await setDoc(docRef, {
-                        like: true,
-                        id: movieId,
-                        nombre: movieData.title,
-                        fechaLike: Timestamp.now(),
-                      });
-                      ToastAndroid.show('Se agregó a tus favoritos. ❤️', ToastAndroid.SHORT);
-                    } else {
-                      await deleteDoc(docRef);
-                      ToastAndroid.show('Se eliminó de tus favoritos. ❌', ToastAndroid.SHORT);
+            <View style={styles.botonesContainer}>
+              {/* Fila superior: Trailer, Me gusta, Listas */}
+              <View style={styles.filaSuperior}>
+                <TouchableOpacity style={styles.button} onPress={openTrailer}>
+                  <FontAwesome name="play-circle" size={14} color="white" />
+                  <Text style={styles.buttonText}>Trailer</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, styles.likeButton]}
+                  onPress={async () => {
+                    console.log('toque el me gusta');
+                    const newStatus = !liked;
+                    setLiked(newStatus);
+
+                    try {
+                      const listRef = doc(
+                        db,
+                        'users',
+                        user.uid,
+                        'listas',
+                        'me_gusta', // colección fija para favoritos
+                      );
+
+                      // Si la lista "me_gusta" no existe aún, créala
+                      const listSnap = await getDoc(listRef);
+                      if (!listSnap.exists()) {
+                        console.log('estoy creando una nueva');
+                        await setDoc(listRef, {
+                          nombreLista: 'Favoritos',
+                          descripcion: 'Películas que te gustan',
+                          fechaCreacion: Timestamp.now(),
+                        });
+                      } else {
+                        console.log('ya esta creada esa mierda');
+                      }
+
+                      const movieRef = doc(
+                        db,
+                        'users',
+                        user.uid,
+                        'listas',
+                        'me_gusta',
+                        'peliculas',
+                        movieId.toString(),
+                      );
+
+                      if (newStatus) {
+                        await setDoc(movieRef, {
+                          movieId,
+                        });
+                        ToastAndroid.show(
+                          'Se agregó a tus favoritos. ❤️',
+                          ToastAndroid.SHORT,
+                        );
+                      } else {
+                        await deleteDoc(movieRef);
+                        ToastAndroid.show(
+                          'Se eliminó de tus favoritos. ❌',
+                          ToastAndroid.SHORT,
+                        );
+                      }
+                    } catch (error) {
+                      console.error('Error al actualizar favoritos:', error);
                     }
-                  } catch (error) {
-                    console.error("Error al actualizar favoritos:", error);
-                  }
-                }}                
-              >
-                <AntDesign
-                  name={liked ? 'heart' : 'hearto'}
-                  size={14}
-                  color={liked ? '#E63946' : 'white'}
-                />
-                <Text style={styles.buttonText}>
-                  {liked ? 'Te gusta' : 'Me gusta'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.listButton}
-                onPress={handleOpenBottomSheet} // Abre el BottomSheet
-              >
-                <FontAwesome name="list" size={14} color="white" />
-              </TouchableOpacity>
+                  }}>
+                  <AntDesign
+                    name={liked ? 'heart' : 'hearto'}
+                    size={14}
+                    color={liked ? '#E63946' : 'white'}
+                  />
+                  <Text style={styles.buttonText}>
+                    {liked ? 'Te gusta' : 'Me gusta'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.listButton}
+                  onPress={handleOpenBottomSheet} // Abre el BottomSheet
+                >
+                  <FontAwesome name="list" size={14} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Fila inferior: Visto + Ver más tarde */}
+              <View style={styles.filaInferior}>
+                <Visto movieId={movieId} />
+                {/*<VerMasTarde movieId={movieId} />BORRADO EL BOTON DE RELOJ*/}
+              </View>
             </View>
-            
           </View>
 
           <View style={styles.posterWrapper}>
@@ -295,9 +344,8 @@ const MovieDetails = () => {
               name={provider.provider_name}
             />
           ))}
-          
         </ScrollView>
-        
+
         <View style={{marginTop: 0}}>
           <View style={{flexDirection: 'row', marginBottom: 30}}>
             <TouchableOpacity
@@ -407,16 +455,11 @@ const MovieDetails = () => {
         ref={bottomSheetRef}
         enablePanDownToClose={true}
         index={-1}
-        backgroundStyle={{ backgroundColor: '#415A77' }} 
-      >
-        <BottomSheetView style={styles.bottomSheetContainer}>        
+        backgroundStyle={{backgroundColor: '#415A77'}}>
+        <BottomSheetView style={styles.bottomSheetContainer}>
           <View style={styles.bottomSheetContent}>
-          <ListasSlide
-            onClose={handleCloseBottomSheet}
-            movieId={movieId}
-          />
-          
-        </View>
+            <ListasSlide onClose={handleCloseBottomSheet} movieId={movieId} />
+          </View>
         </BottomSheetView>
       </BottomSheet>
     </SafeAreaView>
@@ -424,6 +467,23 @@ const MovieDetails = () => {
 };
 
 const styles = StyleSheet.create({
+  botonesContainer: {
+    marginTop: 4,
+    paddingHorizontal: 5,
+  },
+
+  filaSuperior: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  filaInferior: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   container: {
     backgroundColor: '#0D1B2A',
     flex: 1,
@@ -446,7 +506,7 @@ const styles = StyleSheet.create({
   },
   leftContainer: {
     flex: 0.7,
-    paddingRight: 12,
+    paddingRight: 8,
   },
   posterWrapper: {
     flex: 0.3,
