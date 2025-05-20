@@ -221,192 +221,198 @@ const Home = () => {
   }
 
   return (
+  <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
+    {/* Contenido principal con ScrollView */}
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 70 }}> {/* Añade espacio para el NavBar */}
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <Image
+            source={require('../assets/icono.png')} 
+            style={styles.image}
+          />
+          <Text style={styles.title}>¡BIENVENIDO!</Text>
+          <TouchableOpacity onPress={goToPantallaBusqueda}>
+            <FontAwesome name="search" size={24} color="#E0E1DD" />
+          </TouchableOpacity>
+        </View>
 
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
-    <ScrollView>
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <Image
-          source={require('../assets/icono.png')} 
-
-          style={styles.image}
-        />
-        <Text style={styles.title}>¡BIENVENIDO!</Text>
-        <TouchableOpacity onPress={goToPantallaBusqueda}>
-          <FontAwesome name="search" size={24} color="#E0E1DD" />
-        </TouchableOpacity>
-      </View>
-      {/* Otras categorías */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Descubre más categorías</Text>
-        <FlatList
-          horizontal
-          data={categories.filter((cat: any) => !selectedGenres.includes(cat.id))}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => goToCategory(item)} activeOpacity={0.5} >
-              <View style={styles.genrePill}>
-                <Text style={styles.genreText}>{item.name}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.horizontalList}
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
-
-      {/* Sección "Tus recomendaciones" */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionText}>Tus recomendaciones</Text>
-        <View style={styles.sectionLine} />
-      </View>
-
-      {/* Sección "Porque te gustó..." */}
-      {likedMovieTitle && similarMovies.length > 0 && (
+        {/* Otras categorías */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
+          <Text style={styles.sectionTitle}>Descubre más categorías</Text>
           <FlatList
             horizontal
-            data={similarMovies}
+            data={categories.filter((cat: any) => !selectedGenres.includes(cat.id))}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
-              >
-                <Image
-                  source={{
-                    uri: item.poster_path
-                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                      : 'https://via.placeholder.com/150x225'
-                  }}
-                  style={styles.horizontalPoster}
-                />
+              <TouchableOpacity onPress={() => goToCategory(item)} activeOpacity={0.5} >
+                <View style={styles.genrePill}>
+                  <Text style={styles.genreText}>{item.name}</Text>
+                </View>
               </TouchableOpacity>
             )}
             contentContainerStyle={styles.horizontalList}
             showsHorizontalScrollIndicator={false}
           />
         </View>
-      )}
 
-      {/* Sección "Recomendaciones basadas en tus gustos" */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Recomendaciones para ti</Text>
-        <FlatList
-          horizontal
-          data={movies.slice(0, 10)}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
-            >
-              <Image
-                source={{ 
-                  uri: item.poster_path 
-                    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                    : 'https://via.placeholder.com/150x225'
-                }}
-                style={styles.horizontalPoster}
-              />
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.horizontalList}
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
-
-      {/* Mostrar categorías basadas en los géneros seleccionados */}
-      {categories.filter((cat: any) => selectedGenres.includes(cat.id)).map((category: any) => (
-        <View key={category.id} style={styles.sectionContainer}>
-          <View style={styles.categoryHeader}>
-            <Text style={styles.sectionTitle}>{category.name}</Text>
-            <TouchableOpacity onPress={() => goToCategory(category)}>
-              <Text style={styles.seeAll}>Ver todos</Text>
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            horizontal
-            data={category.movies}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
-              >
-                <Image
-                  source={{ 
-                    uri: item.poster_path 
-                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                      : 'https://via.placeholder.com/150x225'
-                  }}
-                  style={styles.horizontalPoster}
-                />
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.horizontalList}
-            showsHorizontalScrollIndicator={false}
-          />
+        {/* Sección "Tus recomendaciones" */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionText}>Tus recomendaciones</Text>
+          <View style={styles.sectionLine} />
         </View>
-      ))}
 
-      {/* Lista de películas en grid */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Todas tus recomendaciones</Text>
-        <FlatList
-          data={movies.filter(
-            (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
-          )}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
-            >
-              <View style={styles.movieItem}>
-                <Image
-                  source={{ 
-                    uri: item.poster_path 
-                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                      : 'https://via.placeholder.com/150x225'
-                  }}
-                  style={styles.poster}
-                />
-                <Text
-                  style={styles.movieTitle}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
+        {/* Sección "Porque te gustó..." */}
+        {likedMovieTitle && similarMovies.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
+            <FlatList
+              horizontal
+              data={similarMovies}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
                 >
-                  {item.title}
-                </Text>
-                <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          numColumns={2}
-          contentContainerStyle={styles.movieList}
-          ListFooterComponent={
-            <TouchableOpacity
-              style={styles.footerButton}
-              onPress={() =>
-                navigation.navigate('ContenidoLista', {
-                  nombreLista: 'Mis Películas Favoritas',
-                  descripcion: 'Esta es una lista de mis películas favoritas.',
-                  tiempoCreacion: '2025-05-06',
-                  peliculas: [950387, 1197306, 324544, 1045938, 1195506],
-                })
-              }
-            >
-              <Text style={styles.footerButtonText}>Ver Lista Completa</Text>
-            </TouchableOpacity>
-          }
-        />
-      </View>
+                  <Image
+                    source={{
+                      uri: item.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : 'https://via.placeholder.com/150x225'
+                    }}
+                    style={styles.horizontalPoster}
+                  />
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.horizontalList}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        )}
 
-      {/* NavBar al final */}
+        {/* Sección "Recomendaciones basadas en tus gustos" */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Recomendaciones para ti</Text>
+          <FlatList
+            horizontal
+            data={movies.slice(0, 10)}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+              >
+                <Image
+                  source={{ 
+                    uri: item.poster_path 
+                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                      : 'https://via.placeholder.com/150x225'
+                  }}
+                  style={styles.horizontalPoster}
+                />
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.horizontalList}
+            showsHorizontalScrollIndicator={false}
+          />
+        </View>
+
+        {/* Mostrar categorías basadas en los géneros seleccionados */}
+        {categories.filter((cat: any) => selectedGenres.includes(cat.id)).map((category: any) => (
+          <View key={category.id} style={styles.sectionContainer}>
+            <View style={styles.categoryHeader}>
+              <Text style={styles.sectionTitle}>{category.name}</Text>
+              <TouchableOpacity onPress={() => goToCategory(category)}>
+                <Text style={styles.seeAll}>Ver todos</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal
+              data={category.movies}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+                >
+                  <Image
+                    source={{ 
+                      uri: item.poster_path 
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : 'https://via.placeholder.com/150x225'
+                    }}
+                    style={styles.horizontalPoster}
+                  />
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.horizontalList}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        ))}
+
+        {/* Lista de películas en grid */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Todas tus recomendaciones</Text>
+          <FlatList
+            data={movies.filter(
+              (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+              >
+                <View style={styles.movieItem}>
+                  <Image
+                    source={{ 
+                      uri: item.poster_path 
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : 'https://via.placeholder.com/150x225'
+                    }}
+                    style={styles.poster}
+                   
+                  />
+                  <Text
+                    style={styles.movieTitle}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.title}
+                  </Text>
+                  <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            numColumns={3}
+           // contentContainerStyle={styles.movieList}
+            contentContainerStyle={styles.horizontalList}
+            showsHorizontalScrollIndicator={false}
+            ListFooterComponent={
+              <TouchableOpacity
+                style={styles.footerButton}
+                onPress={() =>
+                  navigation.navigate('ContenidoLista', {
+                    nombreLista: 'Mis Películas Favoritas',
+                    descripcion: 'Esta es una lista de mis películas favoritas.',
+                    tiempoCreacion: '2025-05-06',
+                    peliculas: [950387, 1197306, 324544, 1045938, 1195506],
+                  })
+                }
+              >
+                <Text style={styles.footerButtonText}>Ver Lista Completa</Text>
+              </TouchableOpacity>
+            }
+          />
+        </View>
+      </ScrollView>
+    </View>
+
+    {/* NavBar fijo en la parte inferior */}
+    <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
       <NavBar />
-    </ScrollView>
+    </View>
   </SafeAreaView>
 );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -443,6 +449,7 @@ const styles = StyleSheet.create({
     margin: 8,
     alignItems: 'center',
   },
+  
   poster: {
     width: 150,
     height: 225,
