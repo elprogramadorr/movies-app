@@ -7,9 +7,9 @@ import { doc, getDoc, updateDoc, arrayUnion, setDoc, serverTimestamp } from 'fir
  * @param movieId ID de la película que se añadirá.
  * @returns Promesa que resuelve cuando la película se añade correctamente.
  */
-export const addMovieToList = async (listId: string, movieId: string) => {
+export const addMovieToList = async (listId: string, movieId: string, userId: string) => {
   try {
-    const listRef = doc(db, 'lista', listId); // Referencia al documento de la lista
+    const listRef = doc(db, 'users', userId, 'listas', listId); // Referencia al documento de la lista
     const listDoc = await getDoc(listRef); // Obtén el documento de la lista
 
     if (listDoc.exists()) {

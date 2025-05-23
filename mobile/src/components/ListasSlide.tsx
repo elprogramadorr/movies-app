@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,39 +7,32 @@ import {
   ActivityIndicator,
   ToastAndroid,
 } from 'react-native';
-import {obtainLists} from '../services/listas/obtainLists';
-import {addMovieToList} from '../services/listas/addMovieToList';
-import {deleteMovieFromList} from '../services/listas/deleteMovieFromList';
-import {BottomSheetFlatList} from '@gorhom/bottom-sheet';
+import { obtainLists } from '../services/listas/obtainLists';
+import { addMovieToList } from '../services/listas/addMovieToList';
+import { deleteMovieFromList } from '../services/listas/deleteMovieFromList';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {useAuthStore} from '../store/useAuthStore';
-import {db} from '../../android/app/src/config/firebaseConfig';
-
-import {
-  collection,
-  doc,
-  setDoc,
-  serverTimestamp,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-} from 'firebase/firestore';
+import { useNavigation } from '@react-navigation/native';
 
 interface ListasSlideProps {
   onClose: () => void;
   movieId: string; // ID de la película
 }
 
-const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
+const ListasSlide: React.FC<ListasSlideProps> = ({ onClose, movieId }) => {
   const user = useAuthStore(state => state.user);
-
+  if (!user) {
+    console.error('No hay usuario autenticado');
+    return null;
+  }
   const [listas, setListas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLists, setSelectedLists] = useState<{[key: string]: boolean}>(
-    {},
-  );
+  const [selectedLists, setSelectedLists] = useState<{ [key: string]: boolean }>({});
+  const navigation = useNavigation();
 
   useEffect(() => {
+    
     const fetchLists = async () => {
       try {
         const data = await obtainLists(user.uid);
@@ -52,8 +45,6 @@ const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
         }, {});
         setSelectedLists(initialSelectedLists);
 
-        console.log('estas son las que renderizo');
-        console.log(initialSelectedLists);
         setListas(data);
       } catch (error) {
         console.error('Error al cargar las listas:', error);
@@ -65,52 +56,40 @@ const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
     fetchLists();
   }, [movieId]);
 
-  const handleToggleList = async (listId: string, movieId: string) => {
-    console.log('listid  ' + listId);
+  const handleToggleList = async (listId: string) => {
     const isSelected = selectedLists[listId];
-
+    console.log('Estado actual de la lista:', listId);
     try {
       if (isSelected) {
         // Si ya está seleccionado, elimina la película de la lista
-        const docRef = doc(db, 'users', user.uid, 'listas', listId);
-        await updateDoc(docRef, {
-          peliculas: arrayRemove(movieId),
-        });
+        await deleteMovieFromList(listId, movieId, user.uid);
+        ToastAndroid.show('Película eliminada de la lista. ❌', ToastAndroid.SHORT);
 
         // Actualiza el número de películas en la lista
-        setListas(prevListas =>
-          prevListas.map(list =>
+        setListas((prevListas) =>
+          prevListas.map((list) =>
             list.id === listId
-              ? {
-                  ...list,
-                  peliculas: list.peliculas.filter(
-                    (id: string) => id !== movieId,
-                  ),
-                }
-              : list,
-          ),
+              ? { ...list, peliculas: list.peliculas.filter((id: string) => id !== movieId) }
+              : list
+          )
         );
       } else {
-        const listRef = doc(db, 'users', user.uid, 'listas', listId); // Referencia a la lista existente
-
-        console.log('movieID  ', movieId);
-        // Usa arrayUnion para añadir la película sin sobrescribir la lista
-        await updateDoc(listRef, {
-          peliculas: arrayUnion(movieId), // Añade el ID de la película a la lista sin sobrescribir
-        });
+        // Si no está seleccionado, añade la película a la lista
+        await addMovieToList(listId, movieId, user.uid);
+        ToastAndroid.show('Película añadida a la lista. ✅', ToastAndroid.SHORT);
 
         // Actualiza el número de películas en la lista
-        setListas(prevListas =>
-          prevListas.map(list =>
+        setListas((prevListas) =>
+          prevListas.map((list) =>
             list.id === listId
-              ? {...list, peliculas: [...(list.peliculas || []), movieId]}
-              : list,
-          ),
+              ? { ...list, peliculas: [...(list.peliculas || []), movieId] }
+              : list
+          )
         );
       }
 
       // Actualiza el estado de selección
-      setSelectedLists(prev => ({
+      setSelectedLists((prev) => ({
         ...prev,
         [listId]: !isSelected,
       }));
@@ -132,29 +111,21 @@ const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
       <Text style={styles.title}>Guardar en una lista</Text>
       <BottomSheetFlatList
         data={listas}
-        keyExtractor={item => item.id}
-        renderItem={({item}) => (
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
           <View style={styles.listItem}>
             <View style={styles.listTextContainer}>
               <View style={styles.iconAndTextContainer}>
-                <FontAwesome
-                  name="film"
-                  size={24}
-                  color="#FFF"
-                  style={styles.icon}
-                />
+                <FontAwesome name="film" size={24} color="#FFF" style={styles.icon} />
                 <View>
-                  <Text style={styles.listTitle}>
-                    {item.nombreLista ? item.nombreLista : 'Ver más tarde'}
-                  </Text>
+                  <Text style={styles.listTitle}>{item.nombreLista}</Text>
                   <Text style={styles.listDescription}>
                     {item.peliculas ? item.peliculas.length : 0} películas
                   </Text>
                 </View>
               </View>
             </View>
-            <TouchableOpacity
-              onPress={() => handleToggleList(item.id, movieId)}>
+            <TouchableOpacity onPress={() => handleToggleList(item.id)}>
               <FontAwesome
                 name={selectedLists[item.id] ? 'check-square' : 'square-o'}
                 size={24}
@@ -167,6 +138,14 @@ const ListasSlide: React.FC<ListasSlideProps> = ({onClose, movieId}) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
+      <View style={styles.footerBar}>
+        <TouchableOpacity
+          style={styles.addListButton}
+          onPress={() => navigation.navigate('NuevaLista')}
+        >
+          <Text style={styles.addListButtonText}>＋ Crear nueva lista</Text>
+        </TouchableOpacity>
+    </View>
     </View>
   );
 };
@@ -178,7 +157,7 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   listContent: {
-    paddingBottom: 16,
+    paddingBottom: 80,
   },
   loadingContainer: {
     flex: 1,
@@ -225,6 +204,29 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 20, // Espacio entre el ícono y el texto
+  },
+    addListButton: {
+    backgroundColor: '#415A77',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  addListButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+   footerBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingVertical: 16,
+    backgroundColor: '#32455b',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#415A77',
+    zIndex: 20,
   },
 });
 

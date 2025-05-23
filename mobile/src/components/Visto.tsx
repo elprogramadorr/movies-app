@@ -1,11 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {TouchableOpacity, Text, ToastAndroid, View} from 'react-native';
-
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import firestore, {firebase} from '@react-native-firebase/firestore';
 import {useAuthStore} from '../store/useAuthStore';
 import {db} from '../../android/app/src/config/firebaseConfig';
-import {getDoc, setDoc, doc, deleteDoc, Timestamp} from 'firebase/firestore';
+import {getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, Timestamp} from 'firebase/firestore';
 
 type Props = {
   movieId: number;
@@ -13,22 +11,20 @@ type Props = {
 };
 
 const Visto = ({movieId, userId = 'anonimo'}: Props) => {
+  
   const user = useAuthStore(state => state.user);
+  if (!user) {
+    console.error('No hay usuario autenticado');
+    return null;
+  }
   const [visto, setVisto] = useState(false);
-  const docRef = doc(
-    db,
-    'users',
-    user.uid,
-    'listas',
-    'vistos',
-    'peliculas',
-    movieId.toString(),
-  );
+  const listRef = doc(db, 'users', user.uid, 'listas', 'vistos');
   useEffect(() => {
     const fetchEstado = async () => {
-      const docSnap = await getDoc(docRef);
+      const docSnap = await getDoc(listRef);
       if (docSnap.exists()) {
-        setVisto(true);
+        const peliculas = docSnap.data().peliculas || [];
+        setVisto(peliculas.includes(movieId));
       }
     };
     fetchEstado();
@@ -39,31 +35,25 @@ const Visto = ({movieId, userId = 'anonimo'}: Props) => {
     setVisto(nuevoEstado);
 
     try {
-      const listRef = doc(db, 'users', user.uid, 'listas', 'vistos');
-
-      const listSnap = await getDoc(listRef);
-      if (!listSnap.exists()) {
-        await setDoc(listRef, {}); // lista vacía, sin metadatos
-      }
-
-      const movieRef = doc(
-        db,
-        'users',
-        user.uid,
-        'listas',
-        'vistos',
-        'peliculas',
-        movieId.toString(),
-      );
-
-      console.log('nuevo estado  ', nuevoEstado);
-
-      if (nuevoEstado) {
-        await setDoc(movieRef, {
-          movieId,
+      const docSnap = await getDoc(listRef);
+      if (!docSnap.exists()) {
+        // Si no existe, crea el documento con el array
+        await setDoc(listRef, {
+          nombreLista: 'vistos',
+          descripcion: 'Películas que ya viste',
+          fechaCreacion: Timestamp.now(),
+          peliculas: nuevoEstado ? [movieId] : [],
         });
       } else {
-        await deleteDoc(movieRef);
+        // Si existe, actualiza el array
+        await updateDoc(
+          listRef,
+          {
+            peliculas: nuevoEstado
+              ? arrayUnion(movieId)
+              : arrayRemove(movieId),
+          }
+        );
       }
 
       ToastAndroid.show(
