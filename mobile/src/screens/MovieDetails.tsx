@@ -24,18 +24,21 @@ import Actor from '../components/Actor';
 import Visto from '../components/Visto';
 import VerMasTarde from '../components/VerMasTarde';
 import {ToastAndroid} from 'react-native';
-import {getDoc, setDoc, doc, deleteDoc} from 'firebase/firestore';
+import {getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove} from 'firebase/firestore';
 import {db} from '../../android/app/src/config/firebaseConfig';
 import {Timestamp} from 'firebase/firestore';
 import {useAuthStore} from '../store/useAuthStore';
 import ListasSlide from '../components/ListasSlide';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
-import {opacity} from 'react-native-reanimated/lib/typescript/Colors';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
 const MovieDetails = () => {
   const user = useAuthStore(state => state.user);
+  if (!user) {
+    console.error('No hay usuario autenticado');
+    return null;
+  }
   const route = useRoute<MovieDetailsRouteProp>();
   const {movieId} = route.params;
   const [movieData, setMovieData] = useState<any>(null);
@@ -255,34 +258,19 @@ const MovieDetails = () => {
                           fechaCreacion: Timestamp.now(),
                         });
                       } else {
-                        console.log('ya esta creada esa mierda');
-                      }
-
-                      const movieRef = doc(
-                        db,
-                        'users',
-                        user.uid,
-                        'listas',
-                        'me_gusta',
-                        'peliculas',
-                        movieId.toString(),
-                      );
-
-                      if (newStatus) {
-                        await setDoc(movieRef, {
-                          movieId,
+                        // Actualiza el array de películas
+                        await updateDoc(listRef, {
+                          peliculas: newStatus
+                            ? arrayUnion(movieId)
+                            : arrayRemove(movieId),
                         });
-                        ToastAndroid.show(
-                          'Se agregó a tus favoritos. ❤️',
-                          ToastAndroid.SHORT,
-                        );
-                      } else {
-                        await deleteDoc(movieRef);
-                        ToastAndroid.show(
-                          'Se eliminó de tus favoritos. ❌',
-                          ToastAndroid.SHORT,
-                        );
                       }
+                      ToastAndroid.show(
+                        newStatus
+                          ? 'Se agregó a tus favoritos. ❤️'
+                          : 'Se eliminó de tus favoritos. ❌',
+                        ToastAndroid.SHORT,
+                      );
                     } catch (error) {
                       console.error('Error al actualizar favoritos:', error);
                     }

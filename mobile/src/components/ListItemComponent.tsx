@@ -101,7 +101,7 @@ export const ListItemComponent = ({
           tiempoCreacion: item.fechaCreacion
             ? formatTimestamp(item.fechaCreacion)
             : 'Sin fecha',
-          peliculas: item.peliculas, // Cambia esto según tus datos
+          peliculas: item.peliculas,
         })
       }>
       {item.image ? (

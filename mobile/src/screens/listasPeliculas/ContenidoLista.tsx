@@ -16,12 +16,11 @@ const ContenidoLista: React.FC = () => {
       tiempoCreacion: string;
       peliculas: number[];
     };
-  console.log(peliculas);
   const navigation = useNavigation();
   const [moviePosters, setMoviePosters] = useState<string[]>([]); // Array de poster_path
 
   useEffect(() => {
-    console.log('ContenidoLista - useEffect - peliculas:', peliculas);
+    console.log('ContenidoLista - peliculas:', nombreLista);
     if (!peliculas || peliculas.length === 0) {
       console.log('El array de películas está vacío o no es válido.');
       return;

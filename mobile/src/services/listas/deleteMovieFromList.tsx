@@ -7,9 +7,9 @@ import { doc, updateDoc, arrayRemove } from 'firebase/firestore';
  * @param movieId ID de la película que se eliminará.
  * @returns Promesa que resuelve cuando la película se elimina correctamente.
  */
-export const deleteMovieFromList = async (listId: string, movieId: string) => {
+export const deleteMovieFromList = async (listId: string, movieId: string, userId: string) => {
   try {
-    const listRef = doc(db, 'lista', listId); // Referencia al documento de la lista
+    const listRef = doc(db, 'users', userId, 'listas', listId); // Referencia al documento de la lista
     await updateDoc(listRef, {
       peliculas: arrayRemove(movieId), // Elimina el ID de la película del arreglo
     });
