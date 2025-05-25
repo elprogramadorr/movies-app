@@ -315,6 +315,7 @@ const MovieDetails = () => {
               }
               style={styles.posterImage}
             />
+            <Text style={{color: 'white', fontSize: 10}}>Puntuación TMDb:</Text>
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingValue}>
                 {(movieData.vote_average / 2).toFixed(1)}{' '}
@@ -530,6 +531,7 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 8,
     aspectRatio: 2 / 3,
+    marginBottom: 8,
   },
   title: {
     color: 'white',
