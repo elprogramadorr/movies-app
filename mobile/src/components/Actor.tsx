@@ -8,15 +8,24 @@ interface ActorProps {
 }
 
 const Actor: React.FC<ActorProps> = ({name, photoUrl, role}) => {
+  const isDefaultImage = !photoUrl;
+
   return (
     <View style={styles.container}>
-      <Image
-        source={{
-          uri: photoUrl || 'https://via.placeholder.com/150x200?text=No+Photo',
-        }}
-        style={styles.photo}
-        resizeMode="cover"
-      />
+      {isDefaultImage ? (
+        <Image
+          source={require('../assets/default-profile.jpg')}
+          style={styles.defaultPhoto}
+          resizeMode="cover"
+        />
+      ) : (
+        <Image
+          source={{uri: photoUrl!}}
+          style={styles.photo}
+          resizeMode="cover"
+        />
+      )}
+
       <View style={styles.infoContainer}>
         <Text style={styles.name} numberOfLines={2}>
           {name}
@@ -36,13 +45,21 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     marginBottom: 10,
-    width: '180',
   },
   photo: {
     width: 50,
     height: 50,
-    borderRadius: 30,
+    borderRadius: 25,
     marginRight: 15,
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  defaultPhoto: {
+    width: 50,
+    height: 50,
+    marginRight: 15,
+    borderRadius: 100,
+    backgroundColor: 'white',
     borderWidth: 1,
     borderColor: 'white',
   },

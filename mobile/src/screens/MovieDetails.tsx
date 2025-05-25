@@ -24,7 +24,14 @@ import Actor from '../components/Actor';
 import Visto from '../components/Visto';
 import VerMasTarde from '../components/VerMasTarde';
 import {ToastAndroid} from 'react-native';
-import {getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove} from 'firebase/firestore';
+import {
+  getDoc,
+  setDoc,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from 'firebase/firestore';
 import {db} from '../../android/app/src/config/firebaseConfig';
 import {Timestamp} from 'firebase/firestore';
 import {useAuthStore} from '../store/useAuthStore';
@@ -302,7 +309,12 @@ const MovieDetails = () => {
           </View>
 
           <View style={styles.posterWrapper}>
-            <Image source={{uri: posterUrl}} style={styles.posterImage} />
+            <Image
+              source={
+                posterUrl ? {uri: posterUrl} : require('../assets/noPoster.jpg')
+              }
+              style={styles.posterImage}
+            />
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingValue}>
                 {(movieData.vote_average / 2).toFixed(1)}{' '}
@@ -314,26 +326,33 @@ const MovieDetails = () => {
 
         <View style={styles.synopsisContainer}>
           <Text style={styles.sectionTitle}>Sinopsis</Text>
-          <Text style={styles.synopsisText}>{movieData.overview}</Text>
+          <Text style={styles.synopsisText}>
+            {movieData.overview ? movieData.overview : 'Sinopsis no disponible'}
+          </Text>
         </View>
 
         <Text style={styles.sectionTitle}>Plataformas</Text>
-        <ScrollView
-          horizontal
-          bounces={false}
-          overScrollMode="never"
-          showsHorizontalScrollIndicator={false}
-          style={styles.platformsSection}>
-          {uniqueProviders.map(provider => (
-            <WatchProvider
-              key={provider.provider_id}
-              link={provider.link}
-              logoUrl={`https://image.tmdb.org/t/p/w500${provider.logo_path}`}
-              name={provider.provider_name}
-            />
-          ))}
-        </ScrollView>
-
+        {uniqueProviders.length > 0 ? (
+          <ScrollView
+            horizontal
+            bounces={false}
+            overScrollMode="never"
+            showsHorizontalScrollIndicator={false}
+            style={styles.platformsSection}>
+            {uniqueProviders.map(provider => (
+              <WatchProvider
+                key={provider.provider_id}
+                link={provider.link}
+                logoUrl={`https://image.tmdb.org/t/p/w500${provider.logo_path}`}
+                name={provider.provider_name}
+              />
+            ))}
+          </ScrollView>
+        ) : (
+          <Text style={styles.synopsisText}>
+            No disponible en plataformas de streaming
+          </Text>
+        )}
         <View style={{marginTop: 0}}>
           <View style={{flexDirection: 'row', marginBottom: 30}}>
             <TouchableOpacity
@@ -418,21 +437,27 @@ const MovieDetails = () => {
             </View>
           ) : (
             <View>
-              <View style={styles.twoColumnGrid}>
-                {movieData.credits?.cast?.slice(0, 200).map((actor: any) => (
-                  <View key={actor.cast_id} style={styles.actorColumn}>
-                    <Actor
-                      name={actor.name}
-                      photoUrl={
-                        actor.profile_path
-                          ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
-                          : null
-                      }
-                      role={actor.character}
-                    />
-                  </View>
-                ))}
-              </View>
+              {movieData.credits?.cast && movieData.credits.cast.length > 0 ? (
+                <View style={styles.twoColumnGrid}>
+                  {movieData.credits.cast.slice(0, 200).map((actor: any) => (
+                    <View key={actor.cast_id} style={styles.actorColumn}>
+                      <Actor
+                        name={actor.name}
+                        photoUrl={
+                          actor.profile_path
+                            ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
+                            : null
+                        }
+                        role={actor.character}
+                      />
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.synopsisText}>
+                  No hay información del elenco disponible.
+                </Text>
+              )}
             </View>
           )}
         </View>
