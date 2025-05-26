@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
-  KeyboardAvoidingView,
   SafeAreaView,
 } from 'react-native';
 import axios from 'axios';
@@ -27,6 +26,13 @@ interface Movie {
   popularity: number;
 }
 
+interface Person {
+  id: number;
+  name: string;
+  profile_path: string;
+  known_for_department: string;
+}
+
 const API_KEY = 'dc66f3e3e06fbb42ce432acf4341427f';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
@@ -35,41 +41,56 @@ const SearchScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [query, setQuery] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [actors, setActors] = useState<Person[]>([]);
+  const [directors, setDirectors] = useState<Person[]>([]);
 
-  const searchMovies = async (text: string) => {
-    const trimmedQuery = text.trim().toLowerCase();
-    if (!trimmedQuery) {
+  const searchAll = async (text: string) => {
+    const trimmed = text.trim().toLowerCase();
+    if (!trimmed) {
       setMovies([]);
+      setActors([]);
+      setDirectors([]);
       return;
     }
 
     try {
-      const response = await axios.get(`${BASE_URL}/search/movie`, {
-        params: {
-          api_key: API_KEY,
-          query: trimmedQuery,
-          language: 'es-ES',
-        },
-      });
+      const [movieRes, personRes] = await Promise.all([
+        axios.get(`${BASE_URL}/search/movie`, {
+          params: {
+            api_key: API_KEY,
+            query: trimmed,
+            language: 'es-ES',
+          },
+        }),
+        axios.get(`${BASE_URL}/search/person`, {
+          params: {
+            api_key: API_KEY,
+            query: trimmed,
+            language: 'es-ES',
+          },
+        }),
+      ]);
 
-      const filteredResults = response.data.results
-        .filter(
-          (movie: Movie) =>
-            movie.poster_path &&
-            movie.title.toLowerCase().includes(trimmedQuery),
-        )
-        .sort((a: Movie, b: Movie) => b.popularity - a.popularity); //ordena por popularidad, los más populares aparecen primero
+      const filteredMovies = movieRes.data.results
+        .filter((m: Movie) => m.poster_path && m.title.toLowerCase().includes(trimmed))
+        .sort((a: Movie, b: Movie) => b.popularity - a.popularity);
 
-      setMovies(filteredResults);
-    } catch (error) {
-      console.error('Error buscando películas:', error);
+      const filteredPeople = personRes.data.results.filter(
+        (p: Person) => p.profile_path && p.name.toLowerCase().includes(trimmed)
+      );
+
+      setActors(filteredPeople.filter(p => p.known_for_department === 'Acting'));
+      setDirectors(filteredPeople.filter(p => p.known_for_department === 'Directing'));
+      setMovies(filteredMovies);
+    } catch (err) {
+      console.error('Error en búsqueda:', err);
     }
   };
 
-  const searchMoviesDebounced = debounce(searchMovies, 500);
+  const debouncedSearch = debounce(searchAll, 500);
 
-  const saveSearchToFirebase = async (searchTerm: string) => {
-    const trimmed = searchTerm.trim();
+  const saveSearchToFirebase = async (term: string) => {
+    const trimmed = term.trim();
     if (!trimmed) return;
 
     try {
@@ -77,13 +98,26 @@ const SearchScreen = () => {
         busqueda: trimmed,
         fecha: serverTimestamp(),
       });
-      console.log('Guardado en Firebase:', trimmed);
-    } catch (error) {
-      console.error('Error al guardar en Firebase:', error);
+    } catch (err) {
+      console.error('Error guardando en Firebase:', err);
     }
   };
 
-  const renderItem = ({ item }: { item: Movie }) => (
+  const SectionTitle = ({ title }: { title: string }) => (
+    <Text style={styles.sectionTitle}>{title}</Text>
+  );
+
+  const renderActorItem = ({ item }: { item: Person }) => (
+    <TouchableOpacity style={styles.personContainer}>
+      <Image
+        source={{ uri: `${IMAGE_BASE_URL}${item.profile_path}` }}
+        style={styles.personImage}
+      />
+      <Text style={styles.personName}>{item.name}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderMovieItem = ({ item }: { item: Movie }) => (
     <TouchableOpacity
       style={styles.imageContainer}
       onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
@@ -91,32 +125,28 @@ const SearchScreen = () => {
       <Image
         source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
         style={styles.poster}
-        resizeMode="cover"
       />
       <Text style={styles.title}>{item.title}</Text>
     </TouchableOpacity>
   );
 
+  const mainData = [{ key: 'results' }]; 
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
-      <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <View style={styles.container}>
         <View style={styles.inputWrapper}>
-          <Icon
-            name="search"
-            size={20}
-            color="#aaa"
-            style={styles.searchIcon}
-          />
+          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
           <TextInput
-            placeholder="Buscar..."
+            placeholder="Buscar películas, actores, directores..."
             placeholderTextColor="#aaa"
             value={query}
             onChangeText={text => {
               setQuery(text);
-              searchMoviesDebounced(text);
+              debouncedSearch(text);
             }}
             onSubmitEditing={() => {
-              searchMovies(query);
+              searchAll(query);
               saveSearchToFirebase(query);
             }}
             style={styles.input}
@@ -127,8 +157,11 @@ const SearchScreen = () => {
               onPress={() => {
                 setQuery('');
                 setMovies([]);
+                setActors([]);
+                setDirectors([]);
               }}
-              style={styles.clearButton}>
+              style={styles.clearButton}
+            >
               <Text style={styles.clearText}>×</Text>
             </TouchableOpacity>
           )}
@@ -138,26 +171,68 @@ const SearchScreen = () => {
           <HistorialBusqueda
             onItemPress={item => {
               setQuery(item);
-              searchMovies(item);
+              searchAll(item);
               saveSearchToFirebase(item);
             }}
           />
         )}
 
-        {movies.length === 0 && query.trim().length > 0 && (
-          <Text style={styles.noResultsText}>
-            No se encontraron resultados para "{query}"
-          </Text>
-        )}
-
         <FlatList
-          data={movies}
-          keyExtractor={item => item.id.toString()}
-          renderItem={renderItem}
-          numColumns={3}
-          contentContainerStyle={styles.grid}
+          data={mainData}
+          keyExtractor={item => item.key}
+          renderItem={() => (
+            <>
+              {actors.length > 0 && (
+                <>
+                  <SectionTitle title="Actores" />
+                  <FlatList
+                    data={actors}
+                    horizontal
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={renderActorItem}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalList}
+                  />
+                </>
+              )}
+
+              {directors.length > 0 && (
+                <>
+                  <SectionTitle title="Directores" />
+                  <FlatList
+                    data={directors}
+                    horizontal
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={renderActorItem}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalList}
+                  />
+                </>
+              )}
+
+              {movies.length > 0 ? (
+                <>
+                  <SectionTitle title="Películas" />
+                  <FlatList
+                    data={movies}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={renderMovieItem}
+                    numColumns={3}
+                    scrollEnabled={false}
+                    contentContainerStyle={styles.grid}
+                  />
+                </>
+              ) : (
+                query.trim().length > 0 && (
+                  <Text style={styles.noResultsText}>
+                    No se encontraron resultados para "{query}"
+                  </Text>
+                )
+              )}
+            </>
+          )}
         />
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -195,8 +270,30 @@ const styles = StyleSheet.create({
     color: '#fff',
     lineHeight: 24,
   },
-  grid: {
-    justifyContent: 'center',
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginVertical: 10,
+  },
+  horizontalList: {
+    paddingBottom: 10,
+  },
+  personContainer: {
+    alignItems: 'center',
+    marginHorizontal: 8,
+    width: 80,
+  },
+  personImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+  },
+  personName: {
+    color: '#fff',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 5,
   },
   imageContainer: {
     flex: 1 / 3,
@@ -213,6 +310,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
     textAlign: 'center',
+  },
+  grid: {
+    justifyContent: 'center',
   },
   noResultsText: {
     color: '#fff',
