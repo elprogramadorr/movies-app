@@ -133,7 +133,7 @@ const Home = () => {
                       >
                           {item.title}
                       </Text>
-                      <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
+                      <Text style={styles.movieRating}>⭐ {(item.vote_average/2).toFixed(1)}</Text>
                   </View>
               </TouchableOpacity>
           )}

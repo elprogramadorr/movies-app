@@ -16,9 +16,10 @@ type Review = {
 
 type Props = {
   movieId: string;
+  isWatched: boolean;
 };
 
-const Review: React.FC<Props> = ({ movieId }) => {
+const Review: React.FC<Props> = ({ movieId, isWatched }) => {
   const auth = getAuth();
   const user = auth.currentUser;
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -164,7 +165,7 @@ const Review: React.FC<Props> = ({ movieId }) => {
     <View style={styles.linea} /> 
       <Text style={styles.title}>Reseñas</Text>
       {/* Formulario solo si no ha escrito reseña */}
-      {user && !hasReviewed && (
+      {user && !hasReviewed && isWatched &&(
         <View style={{ marginBottom: 16 }}>
           <Text style={{ color: '#FFF', marginBottom: 4 }}>Escribe tu reseña:</Text>
           <TextInput
@@ -192,6 +193,11 @@ const Review: React.FC<Props> = ({ movieId }) => {
             <Text style={{ color: '#E7A325', marginTop: 8 }}>Enviando reseña...</Text>
           )}
         </View>
+      )}
+      {user && !isWatched && (
+        <Text style={{ color: '#A0A0A0', marginBottom: 12 }}>
+          Debes marcar la película como vista para poder escribir una reseña.
+        </Text>
       )}
       {user && hasReviewed && (
         <Text style={{ color: '#A0A0A0', marginBottom: 12 }}>Ya has escrito una reseña para esta película.</Text>

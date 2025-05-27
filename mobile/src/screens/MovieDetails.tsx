@@ -55,7 +55,7 @@ const MovieDetails = () => {
   const [activeTab, setActiveTab] = useState<string>('Detalles');
   const [liked, setLiked] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
-
+  const [isWatched, setIsWatched] = useState(false);
   const snapPoints = useMemo(() => ['25%', '50%'], []); // Define los puntos de altura del BottomSheet
 
   const handleOpenBottomSheet = useCallback(() => {
@@ -143,6 +143,8 @@ const MovieDetails = () => {
 
     fetchMovieDetails();
   }, [movieId]);
+
+  
 
   if (loading) {
     return (
@@ -301,7 +303,7 @@ const MovieDetails = () => {
 
               {/* Fila inferior: Visto + Ver más tarde */}
               <View style={styles.filaInferior}>
-                <Visto movieId={movieId} />
+                <Visto movieId={movieId} onChange={setIsWatched}/>
                 {/*<VerMasTarde movieId={movieId} />BORRADO EL BOTON DE RELOJ*/}
               </View>
             </View>
@@ -461,7 +463,7 @@ const MovieDetails = () => {
             </View>
           )}
         </View>
-        <Review movieId={movieId} />
+        <Review movieId={movieId} isWatched={isWatched}/>
       </ScrollView>
       {/* BottomSheet */}
       <BottomSheet

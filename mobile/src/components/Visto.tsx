@@ -8,9 +8,10 @@ import {getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, Timestamp} from
 type Props = {
   movieId: number;
   userId?: string;
+  onChange?: (nuevoEstado: boolean) => void; // <-- NUEVO
 };
 
-const Visto = ({movieId, userId = 'anonimo'}: Props) => {
+const Visto = ({movieId, userId = 'anonimo', onChange}: Props) => {
   
   const user = useAuthStore(state => state.user);
   if (!user) {
@@ -55,7 +56,7 @@ const Visto = ({movieId, userId = 'anonimo'}: Props) => {
           }
         );
       }
-
+      if (onChange) onChange(nuevoEstado);
       ToastAndroid.show(
         nuevoEstado ? 'Agregado a vistos 👁️' : 'Quitado de vistos 🚫',
         ToastAndroid.SHORT,
