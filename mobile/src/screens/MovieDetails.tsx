@@ -37,6 +37,7 @@ import {Timestamp} from 'firebase/firestore';
 import {useAuthStore} from '../store/useAuthStore';
 import ListasSlide from '../components/ListasSlide';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
+import Review from '../components/Reviews';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
@@ -54,7 +55,7 @@ const MovieDetails = () => {
   const [activeTab, setActiveTab] = useState<string>('Detalles');
   const [liked, setLiked] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
-
+  const [isWatched, setIsWatched] = useState(false);
   const snapPoints = useMemo(() => ['25%', '50%'], []); // Define los puntos de altura del BottomSheet
 
   const handleOpenBottomSheet = useCallback(() => {
@@ -143,6 +144,8 @@ const MovieDetails = () => {
     fetchMovieDetails();
   }, [movieId]);
 
+  
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -191,6 +194,7 @@ const MovieDetails = () => {
   const uniqueProviders = Array.from(
     new Map(allProviders.map(p => [p.provider_id, p])).values(),
   );
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -299,7 +303,7 @@ const MovieDetails = () => {
 
               {/* Fila inferior: Visto + Ver más tarde */}
               <View style={styles.filaInferior}>
-                <Visto movieId={movieId} />
+                <Visto movieId={movieId} onChange={setIsWatched}/>
                 {/*<VerMasTarde movieId={movieId} />BORRADO EL BOTON DE RELOJ*/}
               </View>
             </View>
@@ -459,6 +463,7 @@ const MovieDetails = () => {
             </View>
           )}
         </View>
+        <Review movieId={movieId} isWatched={isWatched}/>
       </ScrollView>
       {/* BottomSheet */}
       <BottomSheet
