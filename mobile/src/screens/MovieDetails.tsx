@@ -24,6 +24,7 @@ import Actor from '../components/Actor';
 import Visto from '../components/Visto';
 import VerMasTarde from '../components/VerMasTarde';
 import {ToastAndroid} from 'react-native';
+import CalificarPelicula from '../components/CalificarPelicula';
 import {
   getDoc,
   setDoc,
@@ -54,6 +55,8 @@ const MovieDetails = () => {
   const [activeTab, setActiveTab] = useState<string>('Detalles');
   const [liked, setLiked] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null);
 
   const snapPoints = useMemo(() => ['25%', '50%'], []); // Define los puntos de altura del BottomSheet
 
@@ -97,7 +100,10 @@ const MovieDetails = () => {
           console.log('no existita');
           setLiked(false); // No estaba marcado
         }
-
+        const ratingDoc = await getDoc(doc(db, 'users', user.uid, 'ratings', movieId.toString()));
+        if (ratingDoc.exists()) {
+          setUserRating(ratingDoc.data()?.rating || null);
+        }
         const videoRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos`,
           {
@@ -197,6 +203,7 @@ const MovieDetails = () => {
   );
 
   return (
+    <>
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.backdropContainer}>
@@ -303,8 +310,30 @@ const MovieDetails = () => {
               {/* Fila inferior: Visto + Ver más tarde */}
               <View style={styles.filaInferior}>
                 <Visto movieId={movieId} />
-                {/*<VerMasTarde movieId={movieId} />BORRADO EL BOTON DE RELOJ*/}
               </View>
+                {/* Bloque de estrellas con texto */}
+                <View style={styles.calificarContainer}>
+                  <Text style={styles.buttonText}>Califica la película</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      console.log("Abriendo modal de calificación");
+                      setShowRatingModal(true);
+                    }}
+                    style={{ flexDirection: 'row', marginLeft: 8 }}
+                  >
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <FontAwesome
+                        key={star}
+                        name={userRating && userRating >= star ? 'star' : 'star-o'}
+                        size={16}
+                        color={userRating && userRating >= star ? '#FFD700' : '#ccc'}
+                        style={{ marginHorizontal: 2 }}
+                      />
+                    ))}
+                  </TouchableOpacity>
+                </View>
+              
+
             </View>
           </View>
 
@@ -464,23 +493,41 @@ const MovieDetails = () => {
         </View>
       </ScrollView>
       {/* BottomSheet */}
-      <BottomSheet
-        snapPoints={snapPoints}
-        ref={bottomSheetRef}
-        enablePanDownToClose={true}
-        index={-1}
-        backgroundStyle={{backgroundColor: '#415A77'}}>
-        <BottomSheetView style={styles.bottomSheetContainer}>
-          <View style={styles.bottomSheetContent}>
-            <ListasSlide onClose={handleCloseBottomSheet} movieId={movieId} />
-          </View>
-        </BottomSheetView>
-      </BottomSheet>
+      {showRatingModal === false && (
+        <BottomSheet
+          snapPoints={snapPoints}
+          ref={bottomSheetRef}
+          enablePanDownToClose={true}
+          index={-1}
+          backgroundStyle={{ backgroundColor: '#415A77' }}
+        >
+          <BottomSheetView style={styles.bottomSheetContainer}>
+            <View style={styles.bottomSheetContent}>
+              <ListasSlide onClose={handleCloseBottomSheet} movieId={movieId} />
+            </View>
+          </BottomSheetView>
+        </BottomSheet>
+      )}
+
     </SafeAreaView>
+     <CalificarPelicula
+        visible={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        onRated={(value: number) => setUserRating(value)}
+        userId={user.uid}
+        movieId={movieId}
+      />
+    </>
   );
 };
 
 const styles = StyleSheet.create({
+  calificarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginLeft: 5,
+  },
   botonesContainer: {
     marginTop: 4,
     paddingHorizontal: 5,
