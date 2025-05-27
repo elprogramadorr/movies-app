@@ -30,7 +30,7 @@ const Home = () => {
       try {
         const auth = getAuth();
         const user = auth.currentUser;
-
+        console.log('Usuario autenticado:', user);
         if (!user) {
           Alert.alert('Error', 'No se encontró un usuario autenticado.');
           return;
@@ -133,7 +133,7 @@ const Home = () => {
                       >
                           {item.title}
                       </Text>
-                      <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
+                      <Text style={styles.movieRating}>⭐ {(item.vote_average/2).toFixed(1)}</Text>
                   </View>
               </TouchableOpacity>
           )}
