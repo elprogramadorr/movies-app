@@ -34,6 +34,7 @@ const NuevaListaScreen = () => {
     {id: number; poster_path: string}[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [privada, setPrivada] = useState(true);
 
   const handleTitleChange = (text: string) => {
     if (text.length <= 25) {
@@ -78,6 +79,7 @@ const NuevaListaScreen = () => {
         descripcion: description,
         peliculas: selectedMovies.map(movie => movie.id),
         fechaCreacion: serverTimestamp(),
+        privada: privada,
       });
 
       Alert.alert('Éxito', 'Lista guardada correctamente');
@@ -142,6 +144,19 @@ const NuevaListaScreen = () => {
       {descriptionError ? (
         <Text style={styles.errorText}>{descriptionError}</Text>
       ) : null}
+      <View style={styles.privacyContainer}>
+        <Text style={styles.privacyLabel}>Visibilidad de la lista:</Text>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            {backgroundColor: privada ? '#3B3B98' : '#26A69A'},
+          ]}
+          onPress={() => setPrivada(!privada)}>
+          <Text style={styles.toggleButtonText}>
+            {privada ? 'Privada' : 'Pública'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {selectedMovies.length > 0 ? (
         <FlatList
@@ -219,6 +234,26 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 2 / 3,
     borderRadius: 10,
+  },
+  privacyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    justifyContent: 'space-between',
+  },
+  privacyLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginRight: 10,
+  },
+  toggleButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  toggleButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
 });
 

@@ -20,6 +20,7 @@ import ContenidoLista from './screens/listasPeliculas/ContenidoLista';
 import MisListasScreen from './screens/MisListasScreen';
 import NuevaListaScreen from './screens/NuevaListaScreen';
 import AddMoviesList from './screens/listasPeliculas/AddMoviesList';
+import OtherUserProfile from './screens/OtherUserProfile';
 
 const Stack = createNativeStackNavigator();
 
@@ -139,6 +140,10 @@ const App = () => {
                   options={{title: 'Añadir Películas'}}
                 />
                 <Stack.Screen name="UserProfile" component={UserProfile} />
+                <Stack.Screen
+                  name="OtherUserProfile"
+                  component={OtherUserProfile}
+                />
               </>
             ) : (
               // Non-authenticated user flow
