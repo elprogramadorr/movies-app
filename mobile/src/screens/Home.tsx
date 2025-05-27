@@ -30,7 +30,7 @@ const Home = () => {
       try {
         const auth = getAuth();
         const user = auth.currentUser;
-
+        console.log('Usuario autenticado:', user);
         if (!user) {
           Alert.alert('Error', 'No se encontró un usuario autenticado.');
           return;

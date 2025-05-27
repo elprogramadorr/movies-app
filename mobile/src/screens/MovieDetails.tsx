@@ -30,6 +30,7 @@ import {Timestamp} from 'firebase/firestore';
 import {useAuthStore} from '../store/useAuthStore';
 import ListasSlide from '../components/ListasSlide';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
+import Review from '../components/Reviews';
 
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
@@ -188,6 +189,7 @@ const MovieDetails = () => {
   const uniqueProviders = Array.from(
     new Map(allProviders.map(p => [p.provider_id, p])).values(),
   );
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -436,6 +438,7 @@ const MovieDetails = () => {
             </View>
           )}
         </View>
+        <Review movieId={movieId} />
       </ScrollView>
       {/* BottomSheet */}
       <BottomSheet
