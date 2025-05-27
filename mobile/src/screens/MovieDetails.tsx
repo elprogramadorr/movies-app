@@ -80,22 +80,16 @@ const MovieDetails = () => {
           },
         );
         setMovieData(movieRes.data);
-        const docRef = doc(
-          db,
-          'users',
-          user.uid,
-          'listas',
-          'me_gusta',
-          'peliculas',
-          movieId.toString(),
-        );
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          console.log('ya existita');
-          setLiked(true); // Ya estaba marcado como favorito
+
+        // ✅ Aquí está el cambio correcto
+        const listRef = doc(db, 'users', user.uid, 'listas', 'me_gusta');
+        const listSnap = await getDoc(listRef);
+        if (listSnap.exists()) {
+          const data = listSnap.data();
+          const favoritos = data?.peliculas || [];
+          setLiked(favoritos.includes(movieId));
         } else {
-          console.log('no existita');
-          setLiked(false); // No estaba marcado
+          setLiked(false);
         }
 
         const videoRes = await axios.get(
@@ -127,11 +121,13 @@ const MovieDetails = () => {
           setVideoUrl(`https://www.youtube.com/watch?v=${youtubeVideo.key}`);
         } else {
           const videosEn = videoEN.data.results;
-          const youtubeVideoEn = videosEn.find((v: any) => {
-            v.site === 'YouTube' && v.type === 'Trailer';
-          });
+          const youtubeVideoEn = videosEn.find(
+            (v: any) => v.site === 'YouTube' && v.type === 'Trailer',
+          );
           if (youtubeVideoEn) {
-            setVideoUrl(`https://www.youtube.com/watch?v=${youtubeVideo.key}`);
+            setVideoUrl(
+              `https://www.youtube.com/watch?v=${youtubeVideoEn.key}`,
+            );
           }
         }
       } catch (error) {
@@ -263,6 +259,7 @@ const MovieDetails = () => {
                           nombreLista: 'Favoritos',
                           descripcion: 'Películas que te gustan',
                           fechaCreacion: Timestamp.now(),
+                          peliculas: [movieId],
                         });
                       } else {
                         // Actualiza el array de películas
