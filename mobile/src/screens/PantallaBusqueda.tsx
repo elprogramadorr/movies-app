@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import {
   View,
   TextInput,
-  FlatList,
   Image,
   TouchableOpacity,
   Text,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
+  FlatList,
 } from 'react-native';
 import axios from 'axios';
 import { debounce } from 'lodash';
@@ -107,8 +108,11 @@ const SearchScreen = () => {
     <Text style={styles.sectionTitle}>{title}</Text>
   );
 
-  const renderActorItem = ({ item }: { item: Person }) => (
-    <TouchableOpacity style={styles.personContainer}>
+  const renderPersonItem = ({ item }: { item: Person }) => (
+    <TouchableOpacity
+      style={styles.personContainer}
+      onPress={() => navigation.navigate('PersonDetailsScreen', { personId: item.id })}
+    >
       <Image
         source={{ uri: `${IMAGE_BASE_URL}${item.profile_path}` }}
         style={styles.personImage}
@@ -130,13 +134,11 @@ const SearchScreen = () => {
     </TouchableOpacity>
   );
 
-  const mainData = [{ key: 'results' }]; 
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
       <View style={styles.container}>
         <View style={styles.inputWrapper}>
-          <Icon name="search" size={20} color="#aaa" style={styles.searchIcon} />
+          <Icon name="search" size={16} color="#aaa" style={styles.searchIcon} />
           <TextInput
             placeholder="Buscar películas, actores, directores..."
             placeholderTextColor="#aaa"
@@ -177,61 +179,55 @@ const SearchScreen = () => {
           />
         )}
 
-        <FlatList
-          data={mainData}
-          keyExtractor={item => item.key}
-          renderItem={() => (
+        <ScrollView>
+          {actors.length > 0 && (
             <>
-              {actors.length > 0 && (
-                <>
-                  <SectionTitle title="Actores" />
-                  <FlatList
-                    data={actors}
-                    horizontal
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={renderActorItem}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.horizontalList}
-                  />
-                </>
-              )}
-
-              {directors.length > 0 && (
-                <>
-                  <SectionTitle title="Directores" />
-                  <FlatList
-                    data={directors}
-                    horizontal
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={renderActorItem}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.horizontalList}
-                  />
-                </>
-              )}
-
-              {movies.length > 0 ? (
-                <>
-                  <SectionTitle title="Películas" />
-                  <FlatList
-                    data={movies}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={renderMovieItem}
-                    numColumns={3}
-                    scrollEnabled={false}
-                    contentContainerStyle={styles.grid}
-                  />
-                </>
-              ) : (
-                query.trim().length > 0 && (
-                  <Text style={styles.noResultsText}>
-                    No se encontraron resultados para "{query}"
-                  </Text>
-                )
-              )}
+              <SectionTitle title="Actores" />
+              <FlatList
+                data={actors}
+                horizontal
+                keyExtractor={item => `act:${item.id}`}
+                renderItem={renderPersonItem}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalList}
+              />
             </>
           )}
-        />
+
+          {directors.length > 0 && (
+            <>
+              <SectionTitle title="Directores" />
+              <FlatList
+                data={directors}
+                horizontal
+                keyExtractor={item => `dir:${item.id}`}
+                renderItem={renderPersonItem}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalList}
+              />
+            </>
+          )}
+
+          {movies.length > 0 ? (
+            <>
+              <SectionTitle title="Películas" />
+              <FlatList
+                data={movies}
+                keyExtractor={item => item.id.toString()}
+                renderItem={renderMovieItem}
+                numColumns={3}
+                scrollEnabled={false}
+                contentContainerStyle={styles.grid}
+              />
+            </>
+          ) : (
+            query.trim().length > 0 && (
+              <Text style={styles.noResultsText}>
+                No se encontraron resultados para "{query}"
+              </Text>
+            )
+          )}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -258,7 +254,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#fff',
     paddingVertical: 10,
-    fontSize: 16,
+    fontSize: 14,
   },
   clearButton: {
     paddingHorizontal: 8,

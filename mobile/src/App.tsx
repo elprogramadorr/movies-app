@@ -20,7 +20,7 @@ import ContenidoLista from './screens/listasPeliculas/ContenidoLista';
 import MisListasScreen from './screens/MisListasScreen';
 import NuevaListaScreen from './screens/NuevaListaScreen';
 import AddMoviesList from './screens/listasPeliculas/AddMoviesList';
-
+import PersonDetailsScreen from './components/PersonDetailsScreen';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
@@ -133,6 +133,12 @@ const App = () => {
                   name="ContenidoLista"
                   component={ContenidoLista}
                 />
+                <Stack.Screen
+                name="PersonDetailsScreen"
+                component={PersonDetailsScreen}   is
+                options={{ title: 'Detalles de Persona' }}
+                />
+
                 <Stack.Screen
                   name="AddMoviesList"
                   component={AddMoviesList}
