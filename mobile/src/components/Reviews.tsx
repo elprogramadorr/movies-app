@@ -1,9 +1,33 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, TextInput, Button, Alert, ToastAndroid } from 'react-native';
-import { collection, doc, query, orderBy, onSnapshot, getDoc, setDoc, addDoc, serverTimestamp, where, getDocs } from 'firebase/firestore';
-import { db } from '../../android/app/src/config/firebaseConfig';
-import { getAuth } from '@react-native-firebase/auth';
-import { Image } from 'react-native';
+import React, {useEffect, useState, useRef} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+  TextInput,
+  Button,
+  Alert,
+  ToastAndroid,
+  TouchableOpacity,
+} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {
+  collection,
+  doc,
+  query,
+  orderBy,
+  onSnapshot,
+  getDoc,
+  setDoc,
+  addDoc,
+  serverTimestamp,
+  where,
+  getDocs,
+} from 'firebase/firestore';
+import {db} from '../../android/app/src/config/firebaseConfig';
+import {getAuth} from '@react-native-firebase/auth';
+import {Image} from 'react-native';
 
 type Review = {
   id: string;
@@ -19,7 +43,7 @@ type Props = {
   isWatched: boolean;
 };
 
-const Review: React.FC<Props> = ({ movieId, isWatched }) => {
+const Review: React.FC<Props> = ({movieId, isWatched}) => {
   const auth = getAuth();
   const user = auth.currentUser;
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -30,7 +54,8 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
   const [showAll, setShowAll] = useState(false);
-  
+  const navigation = useNavigation();
+
   useEffect(() => {
     if (!movieId) return;
 
@@ -41,7 +66,12 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
 
         if (!movieDocSnap.exists()) {
           await setDoc(movieDocRef, {});
-          const usuariosRef = collection(db, 'review', String(movieId), 'usuarios');
+          const usuariosRef = collection(
+            db,
+            'review',
+            String(movieId),
+            'usuarios',
+          );
           await addDoc(usuariosRef, {
             usuario: 'Sistema',
             review: '¡Sé el primero en dejar una reseña!',
@@ -64,7 +94,14 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
     if (!movieId || !estructuraLista || !user) {
       setHasReviewed(false); // Permite comentar si no hay usuario
       console.log('No hay movieId, estructuraLista o usuario');
-      console.log('movieId:', movieId, 'estructuraLista:', estructuraLista, 'user:', user);
+      console.log(
+        'movieId:',
+        movieId,
+        'estructuraLista:',
+        estructuraLista,
+        'user:',
+        user,
+      );
       return;
     }
 
@@ -94,7 +131,8 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
           const d = doc.data();
           return {
             id: doc.id,
-            usuario: typeof d.usuario === 'string' ? d.usuario : 'Usuario desconocido',
+            usuario:
+              typeof d.usuario === 'string' ? d.usuario : 'Usuario desconocido',
             review: typeof d.review === 'string' ? d.review : '',
             fecha: d.fecha,
             photoURL: d.photoURL,
@@ -108,7 +146,7 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
         console.error('Error al obtener reviews:', error?.message || error);
         setReviews([]);
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();
@@ -116,41 +154,41 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
 
   // Enviar reseña
   const handleSendReview = async () => {
-      if (sendingRef.current) return; // Bloquea instantáneamente
-      sendingRef.current = true;
-      setSending(true);
+    if (sendingRef.current) return; // Bloquea instantáneamente
+    sendingRef.current = true;
+    setSending(true);
 
-      if (!user) {
-        Alert.alert('Debes iniciar sesión para comentar.');
-        sendingRef.current = false;
-        setSending(false);
-        return;
-      }
-      if (!myReview.trim()) {
-        Alert.alert('Escribe tu reseña antes de enviar.');
-        sendingRef.current = false;
-        setSending(false);
-        return;
-      }
-      try {
-        const reviewsRef = collection(db, 'review', String(movieId), 'usuarios');
-        await addDoc(reviewsRef, {
-          usuario: user.displayName || 'Usuario',
-          review: myReview,
-          fecha: serverTimestamp(),
-          photoURL: user.photoURL || null,
-          uid: user.uid,
-        });
-        setMyReview('');
-        setHasReviewed(true);
-        ToastAndroid.show('Reseña enviada con éxito.', ToastAndroid.SHORT);
-      } catch (error) {
-        Alert.alert('Error', 'No se pudo enviar la reseña.');
-      } finally {
-        sendingRef.current = false;
-        setSending(false);
-      }
-    };
+    if (!user) {
+      Alert.alert('Debes iniciar sesión para comentar.');
+      sendingRef.current = false;
+      setSending(false);
+      return;
+    }
+    if (!myReview.trim()) {
+      Alert.alert('Escribe tu reseña antes de enviar.');
+      sendingRef.current = false;
+      setSending(false);
+      return;
+    }
+    try {
+      const reviewsRef = collection(db, 'review', String(movieId), 'usuarios');
+      await addDoc(reviewsRef, {
+        usuario: user.displayName || 'Usuario',
+        review: myReview,
+        fecha: serverTimestamp(),
+        photoURL: user.photoURL || null,
+        uid: user.uid,
+      });
+      setMyReview('');
+      setHasReviewed(true);
+      ToastAndroid.show('Reseña enviada con éxito.', ToastAndroid.SHORT);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo enviar la reseña.');
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -162,12 +200,14 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
 
   return (
     <View style={styles.box}>
-    <View style={styles.linea} /> 
+      <View style={styles.linea} />
       <Text style={styles.title}>Reseñas</Text>
       {/* Formulario solo si no ha escrito reseña */}
-      {user && !hasReviewed && isWatched &&(
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ color: '#FFF', marginBottom: 4 }}>Escribe tu reseña:</Text>
+      {user && !hasReviewed && isWatched && (
+        <View style={{marginBottom: 16}}>
+          <Text style={{color: '#FFF', marginBottom: 4}}>
+            Escribe tu reseña:
+          </Text>
           <TextInput
             style={{
               backgroundColor: '#19223A',
@@ -184,23 +224,27 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
             editable={!sending}
           />
           <Button
-            title={sending ? "Enviando..." : "Enviar reseña"}
+            title={sending ? 'Enviando...' : 'Enviar reseña'}
             onPress={handleSendReview}
             color="#E7A325"
             disabled={sending}
           />
           {sending && (
-            <Text style={{ color: '#E7A325', marginTop: 8 }}>Enviando reseña...</Text>
+            <Text style={{color: '#E7A325', marginTop: 8}}>
+              Enviando reseña...
+            </Text>
           )}
         </View>
       )}
       {user && !isWatched && (
-        <Text style={{ color: '#A0A0A0', marginBottom: 12 }}>
+        <Text style={{color: '#A0A0A0', marginBottom: 12}}>
           Debes marcar la película como vista para poder escribir una reseña.
         </Text>
       )}
       {user && hasReviewed && (
-        <Text style={{ color: '#A0A0A0', marginBottom: 12 }}>Ya has escrito una reseña para esta película.</Text>
+        <Text style={{color: '#A0A0A0', marginBottom: 12}}>
+          Ya has escrito una reseña para esta película.
+        </Text>
       )}
       {reviews.length === 0 ? (
         <Text style={styles.noReviews}>No hay reseñas aún.</Text>
@@ -208,17 +252,28 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
         <>
           {(showAll ? reviews : reviews.slice(0, 5)).map(item => (
             <View key={item.id} style={styles.reviewItem}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log(item.uid);
+                  if (item.uid && item.uid !== 'sistema') {
+                    navigation.navigate('OtherUserProfile', {userID: item.uid});
+                  }
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginBottom: 2,
+                }}>
                 {item.photoURL ? (
-                  <Image
-                    source={{ uri: item.photoURL }}
-                    style={styles.avatar}
-                  />
+                  <Image source={{uri: item.photoURL}} style={styles.avatar} />
                 ) : (
                   <View style={styles.avatarPlaceholder} />
                 )}
-                <Text style={styles.user}>{item.usuario || 'Usuario desconocido'}</Text>
-              </View>
+                <Text style={styles.user}>
+                  {item.usuario || 'Usuario desconocido'}
+                </Text>
+              </TouchableOpacity>
+
               <Text style={styles.comment}>{item.review || ''}</Text>
               <Text style={styles.date}>
                 {item.fecha?.toDate
@@ -235,8 +290,7 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
                 marginTop: 8,
                 fontWeight: 'bold',
               }}
-              onPress={() => setShowAll(true)}
-            >
+              onPress={() => setShowAll(true)}>
               Ver más reseñas
             </Text>
           )}
@@ -248,8 +302,7 @@ const Review: React.FC<Props> = ({ movieId, isWatched }) => {
                 marginTop: 8,
                 fontWeight: 'bold',
               }}
-              onPress={() => setShowAll(false)}
-            >
+              onPress={() => setShowAll(false)}>
               Ver menos
             </Text>
           )}

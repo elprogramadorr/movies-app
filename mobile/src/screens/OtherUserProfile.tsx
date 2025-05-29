@@ -25,8 +25,10 @@ type ListItem = {
   privada?: boolean;
 };
 
-const OtherUserProfile = ({userID}) => {
-  userID = '0vsM6CtQWDg4mcW70qd7QAuMTXh1'; // fijo por ahora
+const OtherUserProfile = ({route}) => {
+  const {userID} = route.params;
+  console.log('me esta llegando ', userID);
+  // userID = '0vsM6CtQWDg4mcW70qd7QAuMTXh1'; // fijo por ahora
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
