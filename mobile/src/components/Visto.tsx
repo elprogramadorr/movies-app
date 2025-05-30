@@ -8,16 +8,17 @@ import {getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, Timestamp} from
 type Props = {
   movieId: number;
   userId?: string;
-  onChange?: (nuevoEstado: boolean) => void; // <-- NUEVO
+  onToggle?: (watched: boolean) => void; // agregado
 };
 
-const Visto = ({movieId, userId = 'anonimo', onChange}: Props) => {
+const Visto = ({ movieId, userId = 'anonimo', onToggle }: Props) => {
   
   const user = useAuthStore(state => state.user);
   if (!user) {
     console.error('No hay usuario autenticado');
     return null;
   }
+  
   const [visto, setVisto] = useState(false);
   const listRef = doc(db, 'users', user.uid, 'listas', 'vistos');
   useEffect(() => {
@@ -64,6 +65,7 @@ const Visto = ({movieId, userId = 'anonimo', onChange}: Props) => {
     } catch (error) {
       console.error('Error al actualizar vistos:', error);
     }
+    if (onToggle) onToggle(nuevoEstado); // llama si está definido
   };
 
   return (

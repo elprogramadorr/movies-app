@@ -24,6 +24,8 @@ import Actor from '../components/Actor';
 import Visto from '../components/Visto';
 import VerMasTarde from '../components/VerMasTarde';
 import {ToastAndroid} from 'react-native';
+import CalificarPelicula from '../components/CalificarPelicula';
+import BotonCalificacion from '../components/BotonCalificacion';
 import {
   getDoc,
   setDoc,
@@ -31,6 +33,7 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  onSnapshot
 } from 'firebase/firestore';
 import {db} from '../../android/app/src/config/firebaseConfig';
 import {Timestamp} from 'firebase/firestore';
@@ -55,6 +58,8 @@ const MovieDetails = () => {
   const [activeTab, setActiveTab] = useState<string>('Detalles');
   const [liked, setLiked] = useState(false);
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null);
   const [isWatched, setIsWatched] = useState(false);
   const snapPoints = useMemo(() => ['25%', '50%'], []); // Define los puntos de altura del BottomSheet
 
@@ -92,7 +97,7 @@ const MovieDetails = () => {
         } else {
           setLiked(false);
         }
-
+        
         const videoRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos`,
           {
@@ -143,9 +148,38 @@ const MovieDetails = () => {
 
     fetchMovieDetails();
   }, [movieId]);
-
+  // 🔹 useEffect que carga la calificación del usuario
+   useEffect(() => {
+      const fetchRating = async () => {
+        if (!isWatched) {
+          setUserRating(null);
+          return;
+        }
   
-
+        const ratingDoc = await getDoc(doc(db, 'users', user.uid, 'ratings', movieId.toString()));
+        if (ratingDoc.exists()) {
+          setUserRating(ratingDoc.data()?.rating || null);
+        } else {
+          setUserRating(null);
+        }
+      };
+  
+      fetchRating();
+    }, [movieId, user.uid, isWatched]);
+    // Escuchar desde la lista "listas/vistos"
+      useEffect(() => {
+        const ref = doc(db, 'users', user.uid, 'listas', 'vistos');
+        const unsubscribe = onSnapshot(ref, (snapshot) => {
+          if (snapshot.exists()) {
+            const peliculas = snapshot.data().peliculas || [];
+            setIsWatched(peliculas.includes(movieId));
+          } else {
+            setIsWatched(false);
+          }
+        });
+        return () => unsubscribe();
+      }, [movieId]);
+    
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -197,6 +231,7 @@ const MovieDetails = () => {
   
 
   return (
+    <>
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.backdropContainer}>
@@ -303,9 +338,34 @@ const MovieDetails = () => {
 
               {/* Fila inferior: Visto + Ver más tarde */}
               <View style={styles.filaInferior}>
-                <Visto movieId={movieId} onChange={setIsWatched}/>
-                {/*<VerMasTarde movieId={movieId} />BORRADO EL BOTON DE RELOJ*/}
+                <Visto
+                  movieId={movieId}
+                  onToggle={async (watched: boolean) => {
+                    setIsWatched(watched);
+                    if (!watched) {
+                      setUserRating(null);
+                      await deleteDoc(doc(db, 'users', user.uid, 'ratings', movieId.toString()));
+                    }
+                  }}
+                />
               </View>
+
+              {/* Sección Calificación */}
+              <BotonCalificacion
+                rating={userRating}
+                isWatched={isWatched}
+                onPress={() => setShowRatingModal(true)}
+              />
+
+              <CalificarPelicula
+                visible={showRatingModal}
+                onClose={() => setShowRatingModal(false)}
+                onRated={(value: number) => setUserRating(value)}
+                userId={user.uid}
+                movieId={movieId}
+                initialRating={userRating}
+              />
+
             </View>
           </View>
 
@@ -316,7 +376,7 @@ const MovieDetails = () => {
               }
               style={styles.posterImage}
             />
-            <Text style={{color: 'white', fontSize: 10}}>Puntuación TMDb:</Text>
+            <Text style={{color: 'white', fontSize: 10}}>Puntuación general:</Text>
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingValue}>
                 {(movieData.vote_average / 2).toFixed(1)}{' '}
@@ -466,23 +526,34 @@ const MovieDetails = () => {
         <Review movieId={movieId} isWatched={isWatched}/>
       </ScrollView>
       {/* BottomSheet */}
-      <BottomSheet
-        snapPoints={snapPoints}
-        ref={bottomSheetRef}
-        enablePanDownToClose={true}
-        index={-1}
-        backgroundStyle={{backgroundColor: '#415A77'}}>
-        <BottomSheetView style={styles.bottomSheetContainer}>
-          <View style={styles.bottomSheetContent}>
-            <ListasSlide onClose={handleCloseBottomSheet} movieId={movieId} />
-          </View>
-        </BottomSheetView>
-      </BottomSheet>
+      {showRatingModal === false && (
+        <BottomSheet
+          snapPoints={snapPoints}
+          ref={bottomSheetRef}
+          enablePanDownToClose={true}
+          index={-1}
+          backgroundStyle={{ backgroundColor: '#415A77' }}
+        >
+          <BottomSheetView style={styles.bottomSheetContainer}>
+            <View style={styles.bottomSheetContent}>
+              <ListasSlide onClose={handleCloseBottomSheet} movieId={movieId} />
+            </View>
+          </BottomSheetView>
+        </BottomSheet>
+      )}
+
     </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
+  calificarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginLeft: 5,
+  },
   botonesContainer: {
     marginTop: 4,
     paddingHorizontal: 5,
@@ -490,9 +561,10 @@ const styles = StyleSheet.create({
 
   filaSuperior: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginBottom: 10,
+    gap: 5,
   },
 
   filaInferior: {
