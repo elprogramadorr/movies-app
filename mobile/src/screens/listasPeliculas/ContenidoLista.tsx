@@ -1,21 +1,25 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, FlatList, Image, TouchableOpacity} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import styles from './ContenidoLista.styles';
 import {fetchMoviePosters} from '../../services/fetchMoviePosters';
-import {useRoute} from '@react-navigation/native';
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 const ContenidoLista: React.FC = () => {
   const route = useRoute();
-  const {nombreLista, descripcion, tiempoCreacion, peliculas} =
+  let {nombreLista, descripcion, tiempoCreacion, peliculas, privada} =
     route.params as {
       nombreLista: string;
       descripcion: string;
       tiempoCreacion: string;
       peliculas: number[];
+      privada: boolean;
     };
+
+  if (privada == undefined) {
+    privada = true;
+  }
   const navigation = useNavigation();
   const [moviePosters, setMoviePosters] = useState<string[]>([]); // Array de poster_path
 
@@ -66,6 +70,9 @@ const ContenidoLista: React.FC = () => {
       {/* Contenido */}
       <Text style={styles.description}>{descripcion}</Text>
       <Text style={styles.creationTime}>Creado el: {tiempoCreacion}</Text>
+      <Text style={styles.visibility}>
+        Visibilidad: {privada ? 'Privada 🔒' : 'Pública 🌐'}
+      </Text>
 
       {/* Lista de películas */}
       <FlatList

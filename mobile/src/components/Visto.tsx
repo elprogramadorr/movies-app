@@ -57,7 +57,7 @@ const Visto = ({ movieId, userId = 'anonimo', onToggle }: Props) => {
           }
         );
       }
-
+      if (onChange) onChange(nuevoEstado);
       ToastAndroid.show(
         nuevoEstado ? 'Agregado a vistos 👁️' : 'Quitado de vistos 🚫',
         ToastAndroid.SHORT,
