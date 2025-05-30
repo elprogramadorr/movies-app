@@ -1,9 +1,17 @@
-// CalificarPelicula.tsx
-import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+// ✅ CalificarPelicula.tsx actualizado para recibir calificación inicial y reflejarla al abrir el modal
+
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  PanResponder,
+} from 'react-native';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../android/app/src/config/firebaseConfig';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 type Props = {
   visible: boolean;
@@ -11,18 +19,49 @@ type Props = {
   onRated: (value: number) => void;
   userId: string;
   movieId: number;
+  initialRating?: number | null;
 };
 
-const CalificarPelicula = ({ visible, onClose, onRated, userId, movieId }: Props) => {
-  const [rating, setRating] = useState(0);
+const CalificarPelicula = ({ visible, onClose, onRated, userId, movieId, initialRating = 0 }: Props) => {
+  const [rating, setRating] = useState(initialRating || 0);
+  const containerRef = useRef<View>(null);
 
-  const handleRating = async (value: number) => {
-    setRating(value);
+  useEffect(() => {
+    if (visible) setRating(initialRating || 0);
+  }, [visible, initialRating]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (evt, gestureState) => {
+        containerRef.current?.measure((_x, _y, width) => {
+          const touchX = gestureState.moveX - gestureState.x0;
+          const value = Math.min(5, Math.max(0, (touchX / width) * 5));
+          const rounded = Math.round(value * 10) / 10;
+          setRating(rounded);
+        });
+      },
+    })
+  ).current;
+
+  const handleConfirm = async () => {
     await setDoc(doc(db, 'users', userId, 'ratings', movieId.toString()), {
-      rating: value,
+      rating,
     });
-    onRated(value);
+    onRated(rating);
     onClose();
+  };
+
+  const renderStar = (index: number) => {
+    const fillPercent = Math.min(1, Math.max(0, rating - index + 1));
+    return (
+      <View key={index} style={{ width: 32, height: 32, marginHorizontal: 2 }}>
+        <FontAwesome name="star-o" size={32} color="#E0E1DD" style={StyleSheet.absoluteFillObject} />
+        <View style={{ position: 'absolute', width: 32 * fillPercent, overflow: 'hidden', height: 32 }}>
+          <FontAwesome name="star" size={32} color="#E0E1DD" />
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -30,21 +69,23 @@ const CalificarPelicula = ({ visible, onClose, onRated, userId, movieId }: Props
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={{ color: 'white', fontSize: 18 }}>✖</Text>
+            <Text style={{ color: '#E0E1DD', fontSize: 18 }}>✖</Text>
           </TouchableOpacity>
+
           <Text style={styles.title}>Califica la película</Text>
-          <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => handleRating(star)}>
-                <FontAwesome
-                  name={rating >= star ? 'star' : 'star-o'}
-                  size={32}
-                  color="#FFD700"
-                  style={{ marginHorizontal: 4 }}
-                />
-              </TouchableOpacity>
-            ))}
+          <Text style={styles.scoreLabel}>{rating.toFixed(1)} / 5</Text>
+
+          <View
+            ref={containerRef}
+            style={styles.starsContainer}
+            {...panResponder.panHandlers}
+          >
+            {[1, 2, 3, 4, 5].map((star) => renderStar(star))}
           </View>
+
+          <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+            <Text style={styles.confirmText}>Guardar</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -73,12 +114,31 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    color: 'white',
-    marginBottom: 16,
+    color: '#E0E1DD',
+    marginBottom: 8,
     fontWeight: 'bold',
+  },
+  scoreLabel: {
+    color: '#E0E1DD',
+    fontSize: 16,
+    marginBottom: 12,
   },
   starsContainer: {
     flexDirection: 'row',
+    padding: 8,
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  confirmButton: {
+    backgroundColor: '#E7A325',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  confirmText: {
+    color: '#1B263B',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 

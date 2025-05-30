@@ -25,6 +25,7 @@ import Visto from '../components/Visto';
 import VerMasTarde from '../components/VerMasTarde';
 import {ToastAndroid} from 'react-native';
 import CalificarPelicula from '../components/CalificarPelicula';
+import BotonCalificacion from '../components/BotonCalificacion';
 import {
   getDoc,
   setDoc,
@@ -32,6 +33,7 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  onSnapshot
 } from 'firebase/firestore';
 import {db} from '../../android/app/src/config/firebaseConfig';
 import {Timestamp} from 'firebase/firestore';
@@ -57,7 +59,7 @@ const MovieDetails = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
-
+  const [isWatched, setIsWatched] = useState(false);
   const snapPoints = useMemo(() => ['25%', '50%'], []); // Define los puntos de altura del BottomSheet
 
   const handleOpenBottomSheet = useCallback(() => {
@@ -100,10 +102,7 @@ const MovieDetails = () => {
           console.log('no existita');
           setLiked(false); // No estaba marcado
         }
-        const ratingDoc = await getDoc(doc(db, 'users', user.uid, 'ratings', movieId.toString()));
-        if (ratingDoc.exists()) {
-          setUserRating(ratingDoc.data()?.rating || null);
-        }
+        
         const videoRes = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos`,
           {
@@ -152,7 +151,38 @@ const MovieDetails = () => {
 
     fetchMovieDetails();
   }, [movieId]);
-
+  // 🔹 useEffect que carga la calificación del usuario
+   useEffect(() => {
+      const fetchRating = async () => {
+        if (!isWatched) {
+          setUserRating(null);
+          return;
+        }
+  
+        const ratingDoc = await getDoc(doc(db, 'users', user.uid, 'ratings', movieId.toString()));
+        if (ratingDoc.exists()) {
+          setUserRating(ratingDoc.data()?.rating || null);
+        } else {
+          setUserRating(null);
+        }
+      };
+  
+      fetchRating();
+    }, [movieId, user.uid, isWatched]);
+    // Escuchar desde la lista "listas/vistos"
+      useEffect(() => {
+        const ref = doc(db, 'users', user.uid, 'listas', 'vistos');
+        const unsubscribe = onSnapshot(ref, (snapshot) => {
+          if (snapshot.exists()) {
+            const peliculas = snapshot.data().peliculas || [];
+            setIsWatched(peliculas.includes(movieId));
+          } else {
+            setIsWatched(false);
+          }
+        });
+        return () => unsubscribe();
+      }, [movieId]);
+    
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -309,30 +339,33 @@ const MovieDetails = () => {
 
               {/* Fila inferior: Visto + Ver más tarde */}
               <View style={styles.filaInferior}>
-                <Visto movieId={movieId} />
+                <Visto
+                  movieId={movieId}
+                  onToggle={async (watched: boolean) => {
+                    setIsWatched(watched);
+                    if (!watched) {
+                      setUserRating(null);
+                      await deleteDoc(doc(db, 'users', user.uid, 'ratings', movieId.toString()));
+                    }
+                  }}
+                />
               </View>
-                {/* Bloque de estrellas con texto */}
-                <View style={styles.calificarContainer}>
-                  <Text style={styles.buttonText}>Califica la película</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      console.log("Abriendo modal de calificación");
-                      setShowRatingModal(true);
-                    }}
-                    style={{ flexDirection: 'row', marginLeft: 8 }}
-                  >
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <FontAwesome
-                        key={star}
-                        name={userRating && userRating >= star ? 'star' : 'star-o'}
-                        size={16}
-                        color={userRating && userRating >= star ? '#FFD700' : '#ccc'}
-                        style={{ marginHorizontal: 2 }}
-                      />
-                    ))}
-                  </TouchableOpacity>
-                </View>
-              
+
+              {/* Sección Calificación */}
+              <BotonCalificacion
+                rating={userRating}
+                isWatched={isWatched}
+                onPress={() => setShowRatingModal(true)}
+              />
+
+              <CalificarPelicula
+                visible={showRatingModal}
+                onClose={() => setShowRatingModal(false)}
+                onRated={(value: number) => setUserRating(value)}
+                userId={user.uid}
+                movieId={movieId}
+                initialRating={userRating}
+              />
 
             </View>
           </View>
@@ -344,7 +377,7 @@ const MovieDetails = () => {
               }
               style={styles.posterImage}
             />
-            <Text style={{color: 'white', fontSize: 10}}>Puntuación TMDb:</Text>
+            <Text style={{color: 'white', fontSize: 10}}>Puntuación general:</Text>
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingValue}>
                 {(movieData.vote_average / 2).toFixed(1)}{' '}
@@ -510,13 +543,6 @@ const MovieDetails = () => {
       )}
 
     </SafeAreaView>
-     <CalificarPelicula
-        visible={showRatingModal}
-        onClose={() => setShowRatingModal(false)}
-        onRated={(value: number) => setUserRating(value)}
-        userId={user.uid}
-        movieId={movieId}
-      />
     </>
   );
 };
@@ -535,9 +561,10 @@ const styles = StyleSheet.create({
 
   filaSuperior: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginBottom: 10,
+    gap: 5,
   },
 
   filaInferior: {
