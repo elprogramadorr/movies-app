@@ -20,6 +20,8 @@ import ContenidoLista from './screens/listasPeliculas/ContenidoLista';
 import MisListasScreen from './screens/MisListasScreen';
 import NuevaListaScreen from './screens/NuevaListaScreen';
 import AddMoviesList from './screens/listasPeliculas/AddMoviesList';
+import OtherUserProfile from './screens/OtherUserProfile';
+
 import PersonDetailsScreen from './components/PersonDetailsScreen';
 const Stack = createNativeStackNavigator();
 
@@ -134,9 +136,10 @@ const App = () => {
                   component={ContenidoLista}
                 />
                 <Stack.Screen
-                name="PersonDetailsScreen"
-                component={PersonDetailsScreen}   is
-                options={{ title: 'Detalles de Persona' }}
+                  name="PersonDetailsScreen"
+                  component={PersonDetailsScreen}
+                  is
+                  options={{title: 'Detalles de Persona'}}
                 />
 
                 <Stack.Screen
@@ -145,6 +148,10 @@ const App = () => {
                   options={{title: 'Añadir Películas'}}
                 />
                 <Stack.Screen name="UserProfile" component={UserProfile} />
+                <Stack.Screen
+                  name="OtherUserProfile"
+                  component={OtherUserProfile}
+                />
               </>
             ) : (
               // Non-authenticated user flow

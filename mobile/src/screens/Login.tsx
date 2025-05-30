@@ -20,6 +20,15 @@ import {
 import {useAuthStore} from '../store/useAuthStore';
 import {useNavigation} from '@react-navigation/native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
+import {db} from '../../android/app/src/config/firebaseConfig';
 
 const {width, height} = Dimensions.get('window');
 
@@ -47,19 +56,40 @@ const Login = () => {
       await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: false});
       const userInfo = await GoogleSignin.signIn();
       const {idToken, accessToken} = await GoogleSignin.getTokens();
+
       const credential = GoogleAuthProvider.credential(idToken, accessToken);
       const auth = getAuth();
       const firebaseUser = await signInWithCredential(auth, credential);
 
-      setUser({
-        uid: firebaseUser.user.uid,
-        name: firebaseUser.user.displayName || 'Usuario',
-        email: firebaseUser.user.email || '',
-        photoURL: firebaseUser.user.photoURL || '',
+      const uid = firebaseUser.user.uid;
+      const name = firebaseUser.user.displayName || '';
+      const email = firebaseUser.user.email || '';
+      const photoURL = firebaseUser.user.photoURL || '';
+
+      // 🔍 Verificar si el documento ya existe
+      const userDocRef = doc(db, 'users', uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        // 🆕 Crear usuario en Firestore si no existe
+        await setDoc(userDocRef, {
+          name,
+          email,
+          photoURL,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      // ✅ Guardar en estado local
+      useAuthStore.getState().setUser({
+        uid,
+        name,
+        email,
+        photoURL,
       });
-    } catch (e) {
-      console.log('Error crudo:', e);
-      Alert.alert('Error', 'No se pudo completar el inicio de sesión.');
+    } catch (error) {
+      console.log('Error en login:', error);
+      Alert.alert('Error', 'No se pudo iniciar sesión con Google');
     }
   };
 
