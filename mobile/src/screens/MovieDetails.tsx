@@ -16,7 +16,8 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Config from 'react-native-config';
 import axios from 'axios';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {RootStackParamList} from '../utils/types';
 import LinearGradient from 'react-native-linear-gradient';
 import WatchProvider from '../components/WatchProvider';
@@ -38,7 +39,7 @@ import {useAuthStore} from '../store/useAuthStore';
 import ListasSlide from '../components/ListasSlide';
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import Review from '../components/Reviews';
-
+import PersonDetailsScreen from '../components/PersonDetailsScreen';
 type MovieDetailsRouteProp = RouteProp<RootStackParamList, 'MovieDetails'>;
 
 const MovieDetails = () => {
@@ -57,6 +58,7 @@ const MovieDetails = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [isWatched, setIsWatched] = useState(false);
   const snapPoints = useMemo(() => ['25%', '50%'], []); // Define los puntos de altura del BottomSheet
+  const navigation = useNavigation<any>();
 
   const handleOpenBottomSheet = useCallback(() => {
     console.log('Abriendo BottomSheet');
@@ -408,7 +410,7 @@ const MovieDetails = () => {
           </View>
 
           {activeTab === 'Detalles' ? (
-            <View style={{marginLeft: '20'}}>
+            <View style={{marginLeft: 20}}>
               <Text style={styles.sectionTitle}> Productoras</Text>
               <Text style={styles.indentedText}>
                 {movieData.production_companies
@@ -441,18 +443,25 @@ const MovieDetails = () => {
             <View>
               {movieData.credits?.cast && movieData.credits.cast.length > 0 ? (
                 <View style={styles.twoColumnGrid}>
-                  {movieData.credits.cast.slice(0, 200).map((actor: any) => (
-                    <View key={actor.cast_id} style={styles.actorColumn}>
-                      <Actor
-                        name={actor.name}
-                        photoUrl={
-                          actor.profile_path
-                            ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
-                            : null
-                        }
-                        role={actor.character}
-                      />
-                    </View>
+                {movieData.credits.cast.slice(0, 200).map((actor: any, index: number) => (
+                <TouchableOpacity
+                  key={actor.id || `${actor.name}-${index}`}
+                  style={styles.actorColumn}
+                 onPress={() => {
+                    Alert.alert('Actor presionado', actor.name);
+                    navigation.navigate('PersonDetailsScreen', { personId: actor.id });
+                  }}
+                >
+                  <Actor
+                    name={actor.name}
+                    photoUrl={
+                      actor.profile_path
+                        ? `https://image.tmdb.org/t/p/w200${actor.profile_path}`
+                        : null
+                    }
+                    role={actor.character}
+                  />
+                </TouchableOpacity>
                   ))}
                 </View>
               ) : (
@@ -643,8 +652,8 @@ const styles = StyleSheet.create({
   },
   indentedText: {
     color: 'white',
-    paddingLeft: '30',
-    paddingBottom: '8',
+    paddingLeft: 30,
+    paddingBottom: 8,
   },
   actorCard: {
     width: 120,
