@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { deleteMovieFromList } from '../services/listas/deleteMovieFromList';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {useAuthStore} from '../store/useAuthStore';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 interface ListasSlideProps {
   onClose: () => void;
@@ -55,6 +55,31 @@ const ListasSlide: React.FC<ListasSlideProps> = ({ onClose, movieId }) => {
 
     fetchLists();
   }, [movieId]);
+
+useFocusEffect(
+  useCallback(() => {
+    const fetchLists = async () => {
+      try {
+        const data = await obtainLists(user.uid);
+        console.log('Listas cargadas en ListasSlide:', data);
+
+        // Inicializa el estado de las listas seleccionadas
+        const initialSelectedLists = data.reduce((acc: any, list: any) => {
+          acc[list.id] = list.peliculas?.includes(movieId) || false;
+          return acc;
+        }, {});
+        setSelectedLists(initialSelectedLists);
+
+        setListas(data);
+      } catch (error) {
+        console.error('Error al cargar las listas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLists();
+  }, [movieId, user.uid])
+);
 
   const handleToggleList = async (listId: string) => {
     const isSelected = selectedLists[listId];
