@@ -1,26 +1,34 @@
-import React, {useEffect, useState} from 'react';
-import {TouchableOpacity, Text, ToastAndroid, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { TouchableOpacity, Text, ToastAndroid } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import {useAuthStore} from '../store/useAuthStore';
-import {db} from '../../android/app/src/config/firebaseConfig';
-import {getDoc, setDoc, doc, updateDoc, arrayUnion, arrayRemove, Timestamp} from 'firebase/firestore';
+import { useAuthStore } from '../store/useAuthStore';
+import { db } from '../../android/app/src/config/firebaseConfig';
+import {
+  getDoc,
+  setDoc,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  Timestamp,
+} from 'firebase/firestore';
 
 type Props = {
   movieId: number;
   userId?: string;
-  onToggle?: (watched: boolean) => void; // agregado
+  onToggle?: (watched: boolean) => void;
 };
 
 const Visto = ({ movieId, userId = 'anonimo', onToggle }: Props) => {
-  
   const user = useAuthStore(state => state.user);
   if (!user) {
     console.error('No hay usuario autenticado');
     return null;
   }
-  
+
   const [visto, setVisto] = useState(false);
   const listRef = doc(db, 'users', user.uid, 'listas', 'vistos');
+
   useEffect(() => {
     const fetchEstado = async () => {
       const docSnap = await getDoc(listRef);
@@ -39,7 +47,6 @@ const Visto = ({ movieId, userId = 'anonimo', onToggle }: Props) => {
     try {
       const docSnap = await getDoc(listRef);
       if (!docSnap.exists()) {
-        // Si no existe, crea el documento con el array
         await setDoc(listRef, {
           nombreLista: 'vistos',
           descripcion: 'Películas que ya viste',
@@ -47,17 +54,15 @@ const Visto = ({ movieId, userId = 'anonimo', onToggle }: Props) => {
           peliculas: nuevoEstado ? [movieId] : [],
         });
       } else {
-        // Si existe, actualiza el array
-        await updateDoc(
-          listRef,
-          {
-            peliculas: nuevoEstado
-              ? arrayUnion(movieId)
-              : arrayRemove(movieId),
-          }
-        );
+        await updateDoc(listRef, {
+          peliculas: nuevoEstado
+            ? arrayUnion(movieId)
+            : arrayRemove(movieId),
+        });
       }
-      if (onChange) onChange(nuevoEstado);
+
+      if (onToggle) onToggle(nuevoEstado); // ← corregido aquí
+
       ToastAndroid.show(
         nuevoEstado ? 'Agregado a vistos 👁️' : 'Quitado de vistos 🚫',
         ToastAndroid.SHORT,
@@ -65,7 +70,6 @@ const Visto = ({ movieId, userId = 'anonimo', onToggle }: Props) => {
     } catch (error) {
       console.error('Error al actualizar vistos:', error);
     }
-    if (onToggle) onToggle(nuevoEstado); // llama si está definido
   };
 
   return (
@@ -83,7 +87,7 @@ const Visto = ({ movieId, userId = 'anonimo', onToggle }: Props) => {
         gap: 6,
       }}>
       <FontAwesome name={visto ? 'eye' : 'eye-slash'} size={14} color="white" />
-      <Text style={{color: 'white', fontSize: 12}}>
+      <Text style={{ color: 'white', fontSize: 12 }}>
         {visto ? 'Visto' : 'No visto'}
       </Text>
     </TouchableOpacity>
