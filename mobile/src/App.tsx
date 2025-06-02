@@ -138,7 +138,6 @@ const App = () => {
                 <Stack.Screen
                   name="PersonDetailsScreen"
                   component={PersonDetailsScreen}
-                  is
                   options={{title: 'Detalles de Persona'}}
                 />
 

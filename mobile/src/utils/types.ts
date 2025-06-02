@@ -3,5 +3,6 @@ export type RootStackParamList = {
     Home: undefined;
     MovieDetails: { movieId: string };
     PersonDetailsScreen: { personId: number };
+    ActorDetails: { actorId: number };
 };
   
