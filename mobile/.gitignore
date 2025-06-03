@@ -91,3 +91,9 @@ __pycache__/
 
 # Entornos virtuales creados por Poetry o pipenv
 .env
+
+
+virEnv/
+
+node_modules/
+

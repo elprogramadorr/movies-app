@@ -95,3 +95,85 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+
+# Proyecto Backend de Recomendaciones de Películas
+
+Este documento explica cómo configurar un entorno virtual para este proyecto backend de Python y cómo ejecutar la aplicación en diferentes sistemas operativos.
+
+## Prerrequisitos
+
+Asegúrate de tener Python 3 instalado en tu sistema. Puedes verificar la instalación abriendo la terminal (o el símbolo del sistema en Windows) y ejecutando:
+
+```bash
+python --version
+# o
+python3 --version
+
+```
+
+
+# Configuración del Entorno Virtual con venv
+
+venv es un módulo incorporado en Python 3 que se utiliza para crear entornos virtuales ligeros.
+
+1. Crear el Entorno Virtual:
+
+Abre tu terminal o símbolo del sistema, navega hasta el directorio raíz de tu proyecto backend (donde se encuentra el archivo requirements.txt) y ejecuta el siguiente comando:
+
+
+# Para Linux y macOS
+```bash
+python3 -m venv virEnv
+```
+
+# Para Windows
+
+```bash
+python -m venv virEnv
+```
+Esto creará un directorio llamado virEnv (o el nombre que prefieras) que contendrá una copia aislada de Python y las herramientas de instalación de paquetes.
+
+# 2. Activar el Entorno Virtual:
+
+Debes activar el entorno virtual antes de instalar las dependencias y ejecutar la aplicación. El comando para activar el entorno virtual varía según tu sistema operativo:
+
+Linux y macOS:
+
+    source virEnv/bin/activate
+
+Una vez activado, verás el nombre del entorno virtual ((virEnv)) al principio de tu línea de comandos.
+
+Windows (Símbolo del sistema - cmd.exe):
+
+    .\virEnv\Scripts\activate
+
+Windows (PowerShell):
+
+    .\virEnv\Scripts\Activate.ps1
+
+    Al igual que en Linux y macOS, verás (virEnv) al inicio de tu prompt.
+
+# 3. Instalar las Dependencias:
+
+Con el entorno virtual activado, navega (si aún no estás allí) al directorio raíz de tu proyecto y ejecuta el siguiente comando para instalar todas las bibliotecas necesarias listadas en el archivo requirements.txt:
+
+    pip install -r requirements.txt
+
+Esto descargará e instalará todas las dependencias especificadas en el archivo requirements.txt dentro de tu entorno virtual aislado.
+
+# Ejecución del Backend
+
+Una vez que hayas activado el entorno virtual e instalado las dependencias, puedes ejecutar la aplicación backend de FastAPI utilizando uvicorn. Asegúrate de estar en el directorio raíz de tu proyecto (donde se encuentra el archivo backend/main.py).
+
+Ejecuta el siguiente comando:
+
+    uvicorn backend.main:app --reload
+
+Después de ejecutar este comando, deberías ver un mensaje indicando que Uvicorn está corriendo en http://127.0.0.1:8000 (o alguna otra dirección). Esto significa que tu backend está en funcionamiento y listo para recibir solicitudes.
+
+Desactivar el Entorno Virtual (Opcional)
+
+Cuando termines de trabajar en el proyecto, puedes desactivar el entorno virtual ejecutando el siguiente comando en tu terminal:
+
+    deactivate

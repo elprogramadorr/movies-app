@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.1.2",
+    "react-native-toast-message": "^2.3.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@react-native/typescript-config": "^0.79.0",
+    "@types/react": "^19.1.1"
+  }
+}

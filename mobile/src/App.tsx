@@ -11,6 +11,7 @@ import Splash from './screens/Splash';
 import Home from './screens/Home';
 import GenresScreen from './screens/preferenciasIniciales/seleccionarGustos';
 import SeleccionarPeliculasGeneros from './screens/preferenciasIniciales/seleccionarPeliculas';
+import CategoryScreen from './screens/CategoryScreen';
 import MovieDetails from './screens/MovieDetails';
 import PantallaBusqueda from './screens/PantallaBusqueda';
 import UserProfile from './screens/UserProfile';
@@ -27,7 +28,7 @@ const Stack = createNativeStackNavigator();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(null);
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [showReconnectBanner, setShowReconnectBanner] = useState(false);
 
   // Get user and setUser from the auth store
@@ -85,6 +86,7 @@ const App = () => {
       unsubscribe();
       unsubscribeAuth(); // Don't forget to clean up the auth listener
     };
+ // }, [isConnected]);
   }, [isConnected, setUser]); // Removed user from dependencies to avoid unnecessary re-renders
 
   // Show nothing while checking connection status
@@ -93,76 +95,94 @@ const App = () => {
   }
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <View style={{flex: 1}}>
-        {/* Network status banners */}
-        {!isConnected && (
-          <View style={[styles.banner, {backgroundColor: '#D9534F'}]}>
-            <Text style={styles.bannerText}>🚫 Sin conexión a internet</Text>
-          </View>
-        )}
-        {showReconnectBanner && (
-          <View style={[styles.banner, {backgroundColor: '#5cb85c'}]}>
-            <Text style={styles.bannerText}>✅ ¡Conexión restablecida!</Text>
-          </View>
-        )}
-
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{headerShown: false}}>
-            {isLoading ? (
-              <Stack.Screen name="Splash" component={Splash} />
-            ) : user ? (
-              // Authenticated user flow
-              <>
-                <Stack.Screen name="Home" component={Home} />
-                <Stack.Screen name="GenresScreen" component={GenresScreen} />
-                <Stack.Screen
-                  name="seleccionarPeliculasGeneros"
-                  component={SeleccionarPeliculasGeneros}
-                />
-                <Stack.Screen
-                  name="MisListasScreen"
-                  component={MisListasScreen}
-                />
-                <Stack.Screen name="NuevaLista" component={NuevaListaScreen} />
-                <Stack.Screen name="MovieDetails" component={MovieDetails} />
-                <Stack.Screen
-                  name="PantallaBusqueda"
-                  component={PantallaBusqueda}
-                  options={{headerShown: false, title: 'Buscar Películas'}}
-                />
-                <Stack.Screen
-                  name="ContenidoLista"
-                  component={ContenidoLista}
-                />
-                <Stack.Screen
-                  name="PersonDetailsScreen"
-                  component={PersonDetailsScreen}
-                  options={{title: 'Detalles de Persona'}}
-                />
-
-                <Stack.Screen
-                  name="AddMoviesList"
-                  component={AddMoviesList}
-                  options={{title: 'Añadir Películas'}}
-                />
-                <Stack.Screen name="UserProfile" component={UserProfile} />
-                <Stack.Screen
-                  name="OtherUserProfile"
-                  component={OtherUserProfile}
-                />
-              </>
-            ) : (
-              // Non-authenticated user flow
-              <Stack.Screen name="Login" component={Login} />
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
-      </View>
-    </GestureHandlerRootView>
-  );
-};
-
+  <GestureHandlerRootView style={{flex: 1}}>
+    <View style={{flex: 1}}>
+      {/* Network status banners */}
+      {!isConnected && (
+        <View style={[styles.banner, {backgroundColor: '#D9534F'}]}>
+          <Text style={styles.bannerText}>🚫 Sin conexión a internet</Text>
+        </View>
+      )}
+      {showReconnectBanner && (
+        <View style={[styles.banner, {backgroundColor: '#5cb85c'}]}>
+          <Text style={styles.bannerText}>✅ ¡Conexión restablecida!</Text>
+        </View>
+      )}
+      
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            headerStyle: {
+              backgroundColor: '#0D1B2A',
+            },
+            headerTintColor: '#FFF',
+          }}
+        >
+          {isLoading ? (
+            <Stack.Screen name="Splash" component={Splash} />
+          ) : user ? (
+            // Authenticated user flow
+            <>
+              <Stack.Screen name="Home" component={Home} />
+              <Stack.Screen name="GenresScreen" component={GenresScreen} />
+              <Stack.Screen
+                name="seleccionarPeliculasGeneros"
+                component={SeleccionarPeliculasGeneros}
+              />
+              <Stack.Screen
+                name="MisListasScreen"
+                component={MisListasScreen}
+              />
+              <Stack.Screen name="NuevaLista" component={NuevaListaScreen} />
+              <Stack.Screen 
+                name="MovieDetails" 
+                component={MovieDetails}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="PantallaBusqueda"
+                component={PantallaBusqueda}
+                options={{headerShown: false, title: 'Buscar Películas'}}
+              />
+            <Stack.Screen
+                name="CategoryScreen"
+                component={CategoryScreen} 
+                options={({ route }: any) => ({
+                  title: route.params?.categoryName || 'Categoría',
+                  headerShown: true
+                })}
+              />
+              <Stack.Screen
+                name="ContenidoLista"
+                component={ContenidoLista}
+              />
+              <Stack.Screen
+                name="PersonDetailsScreen"
+                component={PersonDetailsScreen}
+                options={{title: 'Detalles de Persona'}}
+              />
+              <Stack.Screen
+                name="AddMoviesList"
+                component={AddMoviesList}
+                options={{title: 'Añadir Películas'}}
+              />
+              <Stack.Screen name="UserProfile" component={UserProfile} />
+              <Stack.Screen
+                name="OtherUserProfile"
+                component={OtherUserProfile}
+              />
+            </>
+          ) : (
+            // Non-authenticated user flow
+            <Stack.Screen name="Login" component={Login} />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
+  </GestureHandlerRootView>
+);
+}
 const styles = StyleSheet.create({
   banner: {
     padding: 8,
