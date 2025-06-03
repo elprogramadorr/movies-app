@@ -1,7 +1,7 @@
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-from typing import List
+from typing import List, Dict, Any
 import numpy as np
 from backend.schemas import MovieFeatures
 from backend.tmdb_client import tmdb_client
@@ -13,30 +13,36 @@ class ContentBasedRecommender:
         self.base_url = "https://api.themoviedb.org/3"
         self.tmdb = tmdb_client_instance
         self.tmdb_api_key = tmdb_client_instance.api_key
+        self.movie_features_cache: Dict[int, Dict[str, Any]] = {}
 
     def _get_movie_features(self, movie_id: int):
-        try:   
-            """Obtiene características de una película desde TMDB."""
-            url = f"{self.base_url}/movie/{movie_id}?api_key={self.tmdb_api_key}"
-            response = requests.get(url)
-            if response.status_code != 200:
-                print(f"Error obteniendo película {movie_id}: {response.status_code}")
+        """Obtiene características de una película desde TMDB usando tmdb_client."""
+        if movie_id in self.movie_features_cache:
+            return self.movie_features_cache[movie_id]
+
+        try:
+            movie_data = self.tmdb.get_movie_details(movie_id)
+            if not movie_data:
                 return None
-            movie_data = response.json()
 
-            # Extrae géneros, keywords y otros metadatos relevantes
             genres = [genre["name"] for genre in movie_data.get("genres", [])]
-            keywords_url = f"{self.base_url}/movie/{movie_id}/keywords?api_key={self.tmdb_api_key}"
-            keywords_data = requests.get(keywords_url).json()
-            keywords = [kw["name"] for kw in keywords_data.get("keywords", [])]
+            # Las keywords ya vienen con append_to_response
+            keywords = [kw["name"] for kw in movie_data.get("keywords", {}).get("keywords", [])]
 
-            return {
+            features = {
                 "id": movie_id,
+                "title": movie_data.get("title", "Unknown"), # Obtener el título aquí
                 "genres": "|".join(genres),
                 "keywords": "|".join(keywords),
                 "vote_average": movie_data.get("vote_average", 0),
                 "popularity": movie_data.get("popularity", 0),
+                "poster_path": movie_data.get("poster_path"),
+                "backdrop_path": movie_data.get("backdrop_path"),
+                "overview": movie_data.get("overview", ""),
+                "release_date": movie_data.get("release_date", "")
             }
+            self.movie_features_cache[movie_id] = features
+            return features
         except Exception as e:
             print(f"Excepción al obtener película {movie_id}: {str(e)}")
             return None
@@ -46,7 +52,8 @@ class ContentBasedRecommender:
         features = []
         for movie_id in movies:
             movie_features = self._get_movie_features(movie_id)
-            features.append(movie_features)
+            if movie_features:
+                features.append(movie_features)
         return features
 
     def _compute_similarity(self, target_features, candidate_features):
@@ -75,52 +82,52 @@ class ContentBasedRecommender:
         return weighted_similarity
 
     def get_initial_recommendations(
-        self, 
-        selected_movies: List[int], 
-        limit: int = 20
-    ):
-        """Genera recomendaciones basadas únicamente en las películas seleccionadas al inicio."""
+            self,
+            selected_movies: List[int],
+            limit: int = 20
+        ):
         if not selected_movies:
             return []
 
-        # Obtiene características de las películas seleccionadas
+        # Obtiene características de las películas seleccionadas (ya usa el caché)
         target_features_list = self._build_feature_matrix(selected_movies)
 
         # Obtiene películas candidatas (películas populares como base)
-        candidate_movies = self._get_popular_movies()
-        candidate_features_list = self._build_feature_matrix(candidate_movies)
-        print(f"Películas objetivo: {len(target_features_list)}")
-        print(f"Películas candidatas: {len(candidate_features_list)}")
+        candidate_movie_ids = self._get_popular_movies()
 
-        # Calcula similitud para cada candidato
+        # Obtiene características de todas las películas candidatas de una vez
+        # Esto es crucial: todas las llamadas a _get_movie_features para candidatos
+        # se benefician del caché y de la única llamada optimizada.
+        candidate_features_list = self._build_feature_matrix(candidate_movie_ids)
+
+        print(f"Películas objetivo: {len(target_features_list)}")
+        print(f"Películas candidatas procesadas: {len(candidate_features_list)}")
+
         recommendations = []
-        for candidate in candidate_features_list:
-            if candidate["id"] in selected_movies:
-                continue  # Evita recomendar películas ya seleccionadas
+        for candidate_features in candidate_features_list:
+            if candidate_features["id"] in selected_movies:
+                continue
 
             max_similarity = 0
-            for target in target_features_list:
-                similarity = self._compute_similarity(target, candidate)
+            for target_features in target_features_list:
+                similarity = self._compute_similarity(target_features, candidate_features)
                 if similarity > max_similarity:
                     max_similarity = similarity
 
-            if max_similarity > 0:  # Ajusta este umbral según necesites
-                details = self.tmdb.get_movie_details(candidate["id"])
+            if max_similarity > 0:
                 recommendations.append({
-                    #"id": candidate["id"],  # Usar 'id' en lugar de 'movie_id'
-                    "movie_id": candidate["id"],
-                    "title": self._get_movie_title(candidate["id"]),
-                    "vote_average": details.get("vote_average", 0) if details else 0,
-                    "poster_path": details.get("poster_path") if details else None,
-                    "backdrop_path": details.get("backdrop_path") if details else None,
-                    "overview": details.get("overview", "") if details else "",
-                    "release_date": details.get("release_date", "") if details else "",
-                    "popularity": details.get("popularity", 0) if details else 0,
-                    "genre_ids": [g["id"] for g in details.get("genres", [])] if details else [],
+                    "movie_id": candidate_features["id"],
+                    "title": candidate_features["title"],
+                    "vote_average": candidate_features["vote_average"],
+                    "poster_path": candidate_features["poster_path"],
+                    "backdrop_path": candidate_features["backdrop_path"],
+                    "overview": candidate_features["overview"],
+                    "release_date": candidate_features["release_date"],
+                    "popularity": candidate_features["popularity"],
+                    "genre_ids": [g_id for g_id in self.tmdb.get_movie_details(candidate_features["id"]).get("genres", [])] if self.tmdb.get_movie_details(candidate_features["id"]) else [], # Ojo: esto sigue siendo una llamada extra. Considera guardarlo en caché también
                     "similarity_score": max_similarity
                 })
 
-        # Ordena por puntuación de similitud
         recommendations.sort(key=lambda x: x["similarity_score"], reverse=True)
         print(f"Recomendaciones generadas: {len(recommendations)}")
         return recommendations[:limit]
@@ -139,24 +146,20 @@ class ContentBasedRecommender:
             print(f"Error al obtener películas populares: {str(e)}")
             return []
 
-    def _get_movie_title(self, movie_id: int):
-        """Obtiene el título de una película."""
-        url = f"{self.base_url}/movie/{movie_id}?api_key={self.tmdb_api_key}"
-        return requests.get(url).json().get("title", "Unknown")
-    
+   
     # En recommender.py, añadir este método
-def update_recommendations(
-    self,
-    user_profile: List[int],  # Películas que le gustan al usuario
-    new_interaction: int,     # Nueva película con la que interactuó
-    limit: int = 20
-    ):
-    """Actualiza recomendaciones basadas en nueva interacción"""
-    # Añadir la nueva película al perfil si no está ya
-    if new_interaction not in user_profile:
-        updated_profile = user_profile + [new_interaction]
-    else:
-        updated_profile = user_profile
-    
-    # Reutilizar el método existente
-    return self.get_initial_recommendations(updated_profile, limit)
+    def update_recommendations(
+        self,
+        user_profile: List[int],  # Películas que le gustan al usuario
+        new_interaction: int,     # Nueva película con la que interactuó
+        limit: int = 20
+        ):
+        """Actualiza recomendaciones basadas en nueva interacción"""
+        # Añadir la nueva película al perfil si no está ya
+        if new_interaction not in user_profile:
+            updated_profile = user_profile + [new_interaction]
+        else:
+            updated_profile = user_profile
+        
+        # Reutilizar el método existente
+        return self.get_initial_recommendations(updated_profile, limit)
