@@ -386,21 +386,7 @@ const Home = () => {
            // contentContainerStyle={styles.movieList}
             contentContainerStyle={styles.horizontalList}
             showsHorizontalScrollIndicator={false}
-            ListFooterComponent={
-              <TouchableOpacity
-                style={styles.footerButton}
-                onPress={() =>
-                  navigation.navigate('ContenidoLista', {
-                    nombreLista: 'Mis Películas Favoritas',
-                    descripcion: 'Esta es una lista de mis películas favoritas.',
-                    tiempoCreacion: '2025-05-06',
-                    peliculas: [950387, 1197306, 324544, 1045938, 1195506],
-                  })
-                }
-              >
-                <Text style={styles.footerButtonText}>Ver Lista Completa</Text>
-              </TouchableOpacity>
-            }
+       
           />
         </View>
       </ScrollView>
