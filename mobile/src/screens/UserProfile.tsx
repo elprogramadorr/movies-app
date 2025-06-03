@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import {useAuthStore} from '../store/useAuthStore';
 import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import NavBar from '../components/NavBar';
 
@@ -13,6 +14,7 @@ const ProfileScreen = () => {
   const handleLogout = async () => {
     try {
       await auth().signOut();
+      await GoogleSignin.signOut();
       setUser(null);
     } catch (error) {
       console.log(error);
