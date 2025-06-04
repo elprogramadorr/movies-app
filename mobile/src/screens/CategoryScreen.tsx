@@ -19,6 +19,7 @@ const CategoryScreen = () => {
 
       <FlatList
         data={movies}
+        numColumns={2} // Esto crea dos columnas
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -34,7 +35,7 @@ const CategoryScreen = () => {
               style={styles.poster}
             />
             <View style={styles.movieInfo}>
-              <Text style={styles.movieTitle}>{item.title}</Text>
+              <Text style={styles.movieTitle} numberOfLines={1}>{item.title}</Text>
               <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
             </View>
           </TouchableOpacity>
@@ -49,6 +50,9 @@ const styles = StyleSheet.create({
   headerContainer: {
     padding: 16,
     backgroundColor: '#0D1B2A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
     fontSize: 20,
@@ -56,32 +60,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   listContainer: {
-    padding: 16,
+    padding: 8, 
   },
   movieItem: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    alignItems: 'center',
+    flex: 1, 
+    margin: 8, 
+    alignItems: 'center', 
+    maxWidth: '50%', 
   },
   poster: {
-    width: 100,
-    height: 150,
+    width: '100%', 
+    aspectRatio: 2/3, 
     borderRadius: 8,
-    marginRight: 16,
   },
   movieInfo: {
-    flex: 1,
+    width: '100%', 
+    paddingTop: 8,
   },
   movieTitle: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 8,
+    textAlign: 'center',
   },
   movieRating: {
     color: '#FFD700',
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 4,
   },
 });
-
 export default CategoryScreen;
