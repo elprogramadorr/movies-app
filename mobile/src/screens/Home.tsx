@@ -17,21 +17,20 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 
 import { fetchSimilarMovies as fetchSimilarMovieService} from '../services/moviebymovieService';
 
-
-import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
+import {db} from '../../android/app/src/config/firebaseConfig';
+import { getFirestore, doc, getDoc,collection, getDocs } from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
 
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import NavBar from '../components/NavBar.tsx'; 
 
-import { useAuthStore } from '../store/authStore';
 
-import { fetchRecommendations, updateRecommendations } from '../services/recommendationService';
+import { fetchRecommendations, updateRecommendations, fetchPersonalizedRecommendations } from '../services/recommendationService';
 //import { fetchPopularMovies,fetchMovieById } from '../services/moviesServices';
 import { fetchMovieById, fetchSimilarMovies, fetchPopularMovies } from '../services/moviesServices';
 import { fetchGenres} from '../services/genresServices';
 import { fetchMoviesByGenres } from '../services/movieGenreService';
-import { Movie } from '../types';
+import { Movie, RecommendationSections } from '../types';
 import CONFIG from '../config/config';
 
 type Genre = { id: number; name: string };
@@ -56,6 +55,7 @@ const Home = () => {
   const initialSelectedMovies = route.params?.selectedMovies || [];
   const initialSelectedGenres = route.params?.selectedGenres || [];
   const selectedGenres = route.params?.selectedGenres || [];
+  const [recommendationSections, setRecommendationSections] = useState<RecommendationSections>({});
 
   // Cargar categorías de películas
   const loadCategories = async () => {
@@ -78,7 +78,7 @@ const Home = () => {
     }
   };
 
-  // Obtener películas seleccionadas del usuario desde Firestore
+    // Obtener películas seleccionadas del usuario desde Firestore
   const fetchSelectedMovies = async () => {
     try {
       const auth = getAuth();
@@ -86,49 +86,168 @@ const Home = () => {
 
       if (!user) {
         Alert.alert('Error', 'No se encontró un usuario autenticado.');
+        // Considera navegar a la pantalla de login o gustos si no hay usuario
+        navigation.navigate('seleccionarGustos'); 
         return;
       }
 
       const firestore = getFirestore();
-      const userDoc = doc(firestore, 'users', user.uid);
-      const userSnapshot = await getDoc(userDoc);
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userSnapshot = await getDoc(userDocRef);
+
+      let initialUserSelectedMovies: number[] = [];
+      let initialLikedMovies: number[] = [];
+      let initialWatchedMovies: number[] = [];
+      let initialRatedMovies: Array<{movie_id: number, rating: number}> = [];
 
       if (userSnapshot.exists()) {
         const userData = userSnapshot.data();
-        const movies = userData?.selectedMovies || [];
-        setSelectedMovies(movies);
-        setUserLikes(movies); // Establecer likes iniciales
+        initialUserSelectedMovies = userData?.selectedMovies || [];
+        
+        // No necesitamos cargar likedMovies/watchedMovies/ratedMovies del documento principal
+        // si los cargaremos de las subcolecciones, pero si quieres tener un fallback, puedes dejarlos.
+        // Por ahora, nos enfocamos en las subcolecciones.
       } else {
+        // Si el documento principal del usuario no existe, navega para que seleccione gustos iniciales
         navigation.navigate('seleccionarGustos');
+        setInitialLoading(false); // Detener carga si no hay usuario o documento
+        setLoading(false);
+        return; // Detener la ejecución si no hay documento de usuario
       }
+
+      // --- NUEVA LÓGICA: OBTENER LIKED MOVIES Y WATCHED MOVIES DE LAS SUBCLECIONES 'listas' ---
+      const likedListRef = doc(firestore, 'users', user.uid, 'listas', 'me_gusta');
+      const likedListSnapshot = await getDoc(likedListRef);
+      if (likedListSnapshot.exists()) {
+        initialLikedMovies = likedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
+      } else {
+        console.log("La lista 'me_gusta' no existe para el usuario.");
+      }
+
+      const watchedListRef = doc(firestore, 'users', user.uid, 'listas', 'vistos');
+      const watchedListSnapshot = await getDoc(watchedListRef);
+      if (watchedListSnapshot.exists()) {
+        initialWatchedMovies = watchedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
+      } else {
+        console.log("La lista 'vistos' no existe para el usuario.");
+      }
+
+      // --- NUEVA LÓGICA: OBTENER RATED MOVIES DE LA SUBCOLECCIÓN 'ratings' ---
+      const ratingsCollectionRef = collection(firestore, 'users', user.uid, 'ratings');
+      const ratingsSnapshot = await getDocs(ratingsCollectionRef);
+      initialRatedMovies = ratingsSnapshot.docs.map(doc => ({
+        movie_id: parseInt(doc.id), // El ID de la película es el ID del documento en 'ratings'
+        rating: doc.data().rating
+      }));
+      
+      // Actualizar los estados relevantes en Home
+      setSelectedMovies(initialUserSelectedMovies);
+      // Combinar los likes iniciales con los de la lista 'me_gusta' para el backend
+      setUserLikes([...new Set([...initialUserSelectedMovies, ...initialLikedMovies])]); 
+      // Setear los valores que se enviarán al backend en loadRecommendations
+      // Puedes guardar estos en un estado o pasarlos directamente
+      // Por simplicidad, los pasaremos directamente a loadRecommendations
+
     } catch (error) {
-      console.error('Error al obtener las películas seleccionadas:', error);
-      navigation.navigate('seleccionarGustos');
+      console.error('Error al obtener las películas seleccionadas o listas:', error);
+      Alert.alert('Error', 'No se pudieron cargar tus preferencias de películas.');
+      navigation.navigate('seleccionarGustos'); // Navegar si hay un error crítico
     } finally {
       setSelectedMoviesLoaded(true);
+      // Es crucial que loadRecommendations se llame aquí o después de asegurar que estos datos estén disponibles
+      // Si loadRecommendations depende de estos estados, el useEffect ya lo manejará
     }
   };
 
   // Cargar recomendaciones de películas
   const loadRecommendations = async () => {
     try {
-      await loadCategories();
-      const response = await fetchRecommendations(
-        selectedMovies,
+      setLoading(true); // Reiniciar loading al cargar recomendaciones
+      await loadCategories(); // Asegúrate de que esto no dependa de los likes para evitar bucles
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) {
+        console.warn('Usuario no autenticado, no se pueden cargar recomendaciones personalizadas.');
+        setLoading(false);
+        setInitialLoading(false);
+        return;
+      }
+
+      const firestore = getFirestore();
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userSnapshot = await getDoc(userDocRef);
+
+      // --- OBTENER LAS LISTAS Y RATINGS ACTUALIZADAS DIRECTAMENTE AQUÍ ---
+      // Si fetchSelectedMovies ya los cargó en estados, puedes usar los estados.
+      // Si prefieres que loadRecommendations sea autocontenida, haz la carga aquí.
+      // Optaremos por hacer la carga aquí para que sea más robusto si los efectos se disparan diferente.
+
+      let currentSelectedMovies: number[] = [];
+      let currentLikedMovies: number[] = [];
+      let currentWatchedMovies: number[] = [];
+      let currentRatedMovies: Array<{movie_id: number, rating: number}> = [];
+
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data();
+        currentSelectedMovies = userData?.selectedMovies || [];
+      }
+
+      const likedListRef = doc(firestore, 'users', user.uid, 'listas', 'me_gusta');
+      const likedListSnapshot = await getDoc(likedListRef);
+      if (likedListSnapshot.exists()) {
+        currentLikedMovies = likedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
+      }
+
+      const watchedListRef = doc(firestore, 'users', user.uid, 'listas', 'vistos');
+      const watchedListSnapshot = await getDoc(watchedListRef);
+      if (watchedListSnapshot.exists()) {
+        currentWatchedMovies = watchedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
+      }
+
+      const ratingsCollectionRef = collection(firestore, 'users', user.uid, 'ratings');
+      const ratingsSnapshot = await getDocs(ratingsCollectionRef);
+      currentRatedMovies = ratingsSnapshot.docs.map(doc => ({
+        movie_id: parseInt(doc.id),
+        rating: doc.data().rating
+      }));
+      // -------------------------------------------------------------------
+
+      // Obtener recomendaciones personalizadas
+      const personalizedResponse = await fetchPersonalizedRecommendations(
+        currentSelectedMovies, // Tus gustos iniciales
+        currentLikedMovies,    // Películas que le gustan de la lista
+        currentWatchedMovies,  // Películas vistas de la lista
+        currentRatedMovies,    // Películas calificadas
         { limit: 20 }
       );
-      setRecommendedMovies(response);
+      
+      console.log("Respuesta de personalizedResponse:", personalizedResponse); // DEBUGGING
 
-      const uniqueMovies = response.filter(
+      // Obtener recomendaciones iniciales
+      const initialResponse = await fetchRecommendations(
+        currentSelectedMovies,
+        { limit: 20 }
+      );
+
+      // Combinar y filtrar películas únicas
+      const allRecommendedMovies = [
+        ...(personalizedResponse.recommendations || []), // Asegúrate de que sea un array
+        ...initialResponse
+      ].filter(
         (movie: Movie, index: number, self: Movie[]) =>
           index === self.findIndex((m) => m.id === movie.id)
       );
 
-      setMovies(uniqueMovies);
-      setUserLikes(selectedMovies);
+      // Actualizar estados
+      setRecommendedMovies(allRecommendedMovies);
+      setMovies(allRecommendedMovies); // `movies` se usa en la FlatList de grid
+      setRecommendationSections(personalizedResponse.sections || {}); // ¡Aquí recibes las secciones!
+      setUserLikes([...new Set([...currentLikedMovies, ...currentSelectedMovies])]); // Para futuras actualizaciones
 
-      if (selectedMovies.length > 0) {
-        const firstSelectedMovieId = selectedMovies[0];
+      // Mantener la funcionalidad de películas similares (si aplica)
+      if (currentSelectedMovies.length > 0) {
+        const firstSelectedMovieId = currentSelectedMovies[0];
         const similarMoviesData = await fetchSimilarMovieService(firstSelectedMovieId);
         setSimilarMovies(similarMoviesData.results.slice(0, 10));
 
@@ -138,13 +257,21 @@ const Home = () => {
         } catch (error) {
           console.error('Error al obtener detalles de la película:', error);
         }
+      } else {
+          setSimilarMovies([]); // Limpiar si no hay seleccionadas iniciales
+          setLikedMovieTitle(null);
       }
+
     } catch (error) {
       console.error('Error al cargar recomendaciones:', error);
+      Alert.alert('Error', 'No se pudieron cargar las recomendaciones.');
+      // Fallback a películas populares si hay un error en la personalización
       const fallbackMovies = await fetchPopularMovies();
       setMovies(fallbackMovies);
+      setRecommendedMovies(fallbackMovies);
       setSimilarMovies([]);
       setLikedMovieTitle(null);
+      setRecommendationSections({});
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -219,12 +346,10 @@ const Home = () => {
       </SafeAreaView>
     );
   }
-
   return (
   <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1B2A' }}>
-    {/* Contenido principal con ScrollView */}
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 70 }}> {/* Añade espacio para el NavBar */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 70 }}>
         {/* Header */}
         <View style={styles.headerContainer}>
           <Image
@@ -245,7 +370,7 @@ const Home = () => {
             data={categories.filter((cat: any) => !selectedGenres.includes(cat.id))}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => goToCategory(item)} activeOpacity={0.5} >
+              <TouchableOpacity onPress={() => goToCategory(item)} activeOpacity={0.5}>
                 <View style={styles.genrePill}>
                   <Text style={styles.genreText}>{item.name}</Text>
                 </View>
@@ -262,7 +387,46 @@ const Home = () => {
           <View style={styles.sectionLine} />
         </View>
 
-        {/* Sección "Porque te gustó..." */}
+         
+        {/* SECCIONES PERSONALIZADAS */}
+
+      
+        {/* 2. Porque te gustó [última película marcada como me gusta] */}
+        {recommendationSections.based_on_last_liked?.movies && recommendationSections.based_on_last_liked.movies.length > 0 &&(
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>
+              {recommendationSections.based_on_last_liked.title || "Porque te gustó esta película"}
+            </Text>
+            <FlatList
+              horizontal
+              data={recommendationSections.based_on_last_liked.movies}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+                >
+                  <Image
+                    source={{
+                      uri: item.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : 'https://via.placeholder.com/150x225'
+                    }}
+                    style={styles.horizontalPoster}
+                  />
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item, index) => {
+                            if (item && item.id !== undefined && item.id !== null) {
+                              return item.id.toString();
+                            }
+                            return index.toString(); 
+                          }}
+              contentContainerStyle={styles.horizontalList}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        )}
+
+        {/*Peliculas de gustos inicial */}
         {likedMovieTitle && similarMovies.length > 0 && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
@@ -290,13 +454,21 @@ const Home = () => {
           </View>
         )}
 
-        {/* Sección "Recomendaciones basadas en tus gustos" */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Recomendaciones para ti</Text>
+          {/* Peliculas populares actuales */}
+        <View style={styles.horizontalCarteleraContainer}>
+          <View style={styles.sectionHeaderCartel}>
+            <Text style={styles.sectionTitleCartel}>Películas populares</Text>
+           
+          </View>
           <FlatList
             horizontal
-            data={movies.slice(0, 10)}
-            keyExtractor={(item) => item.id.toString()}
+            data={movies.filter((movie, index, self) => index === self.findIndex((m) => m.id === movie.id))}
+            keyExtractor={(item, index) => {
+                            if (item && item.id !== undefined && item.id !== null) {
+                              return item.id.toString();
+                            }
+                            return index.toString(); 
+                          }}
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
@@ -307,8 +479,9 @@ const Home = () => {
                       ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
                       : 'https://via.placeholder.com/150x225'
                   }}
-                  style={styles.horizontalPoster}
+                  style={styles.horizontalCartelera}
                 />
+                
               </TouchableOpacity>
             )}
             contentContainerStyle={styles.horizontalList}
@@ -316,7 +489,77 @@ const Home = () => {
           />
         </View>
 
-        {/* Mostrar categorías basadas en los géneros seleccionados */}
+        {/* 4. Porque viste [última película vista] */}
+        {recommendationSections.based_on_last_watched?.movies && recommendationSections.based_on_last_watched.movies.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>
+              {recommendationSections.based_on_last_watched.title || "Porque viste esta película"}
+            </Text>
+            <FlatList
+              horizontal
+              data={recommendationSections.based_on_last_watched.movies}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+                >
+                  <Image
+                    source={{
+                      uri: item.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : 'https://via.placeholder.com/150x225'
+                    }}
+                    style={styles.horizontalPoster}
+                  />
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item, index) => {
+                            if (item && item.id !== undefined && item.id !== null) {
+                              return item.id.toString();
+                            }
+                            return index.toString(); 
+                          }}
+              contentContainerStyle={styles.horizontalList}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        )}
+
+        {/* 5. Porque te encantó [película mejor calificada] */}
+        {recommendationSections.based_on_high_rated?.movies && recommendationSections.based_on_high_rated.movies.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>
+              {recommendationSections.based_on_high_rated.title || "Porque te encantaron estas películas"}
+            </Text>
+            <FlatList
+              horizontal
+              data={recommendationSections.based_on_high_rated.movies}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
+                >
+                  <Image
+                    source={{
+                      uri: item.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                        : 'https://via.placeholder.com/150x225'
+                    }}
+                    style={styles.horizontalPoster}
+                  />
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item, index) => {
+                            if (item && item.id !== undefined && item.id !== null) {
+                              return item.id.toString();
+                            }
+                            return index.toString(); 
+                          }}
+              contentContainerStyle={styles.horizontalList}
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        )}
+
+        {/* Sección de categorías basadas en géneros seleccionados */}
         {categories.filter((cat: any) => selectedGenres.includes(cat.id)).map((category: any) => (
           <View key={category.id} style={styles.sectionContainer}>
             <View style={styles.categoryHeader}>
@@ -328,7 +571,12 @@ const Home = () => {
             <FlatList
               horizontal
               data={category.movies}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item, index) => {
+                            if (item && item.id !== undefined && item.id !== null) {
+                              return item.id.toString();
+                            }
+                            return index.toString(); 
+                          }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
@@ -348,15 +596,19 @@ const Home = () => {
             />
           </View>
         ))}
-
-        {/* Lista de películas en grid */}
+           {/* Lista de películas en grid */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Todas tus recomendaciones</Text>
           <FlatList
             data={movies.filter(
               (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
             )}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) => {
+                            if (item && item.id !== undefined && item.id !== null) {
+                              return item.id.toString();
+                            }
+                            return index.toString(); 
+                          }}
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
@@ -378,11 +630,13 @@ const Home = () => {
                   >
                     {item.title}
                   </Text>
-                  <Text style={styles.movieRating}>⭐ {item.vote_average.toFixed(1)}</Text>
+                  <Text style={styles.movieRating}>
+                    ⭐ {(item.vote_average || 0).toFixed(1)}
+                  </Text>
                 </View>
               </TouchableOpacity>
             )}
-            numColumns={3}
+            numColumns={2}
            // contentContainerStyle={styles.movieList}
             contentContainerStyle={styles.horizontalList}
             showsHorizontalScrollIndicator={false}
@@ -391,13 +645,14 @@ const Home = () => {
         </View>
       </ScrollView>
     </View>
-
+        
     {/* NavBar fijo en la parte inferior */}
     <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
       <NavBar />
     </View>
   </SafeAreaView>
 );
+  
 };
 const styles = StyleSheet.create({
   container: {
@@ -437,7 +692,7 @@ const styles = StyleSheet.create({
   },
   
   poster: {
-    width: 150,
+    width: 170,
     height: 225,
     borderRadius: 8,
     marginBottom: 8,
@@ -544,6 +799,41 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+   horizontalCarteleraContainer: {
+    marginVertical: 10,
+  },
+  horizontalCartelera: {
+    width: 150,
+    height: 300,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  horizontalCarteleraTitle: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  horizontalCarteleraRating: {
+    color: '#FFD700',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 2, 
+  }, 
+  sectionHeaderCartel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    marginLeft: 15,
+  },
+  sectionTitleCartel: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginRight: 10,
   },
   /**Borrar despues */
 });

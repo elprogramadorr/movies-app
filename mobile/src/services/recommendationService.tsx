@@ -1,5 +1,5 @@
 import CONFIG from '../config/config';
-import { Movie, RecommendationsResponse } from '../types';
+import { Movie, RecommendationResponse } from '../types';
 
 interface RecommendationRequest {
         selected_movies: number[];
@@ -90,3 +90,36 @@ interface RecommendationRequest {
       throw error;
     }
   };
+
+  export const fetchPersonalizedRecommendations = async (
+   selectedMovies: number[] = [], 
+  likedMovies: number[] = [],
+  watchedMovies: number[] = [],
+  ratedMovies: Array<{movie_id: number, rating: number}> = [],
+  options?: { limit?: number }
+): Promise<RecommendationResponse> => {
+  try {
+    const response = await fetch('http://10.0.2.2:8000/recommendations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        selected_movies: selectedMovies,
+        liked_movies: likedMovies,
+        watched_movies: watchedMovies,
+        rated_movies: ratedMovies,
+        limit: options?.limit || 20
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching personalized recommendations:', error);
+    throw error;
+  }
+};

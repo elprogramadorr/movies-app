@@ -37,7 +37,12 @@ export type RootStackParamList = {
     genres?: Genre[];
     imdb_id?: string;
   }
-  
+  export interface RecommendationSection {
+  title: string;
+  movies: Movie[];
+  reference_movies?: number[];
+  reference_movie?: number;
+ }
   export interface RecommendationsResponse {
     recommendations: Movie[];
   }
@@ -48,4 +53,22 @@ export type RootStackParamList = {
     total_pages: number;
     total_results: number;
   }
-  
+  export interface RecommendationResponse {
+  recommendations: Movie[];
+  sections: {
+    based_on_likes?: RecommendationSection;
+    based_on_last_liked?: RecommendationSection;
+    based_on_watched?: RecommendationSection;
+    based_on_last_watched?: RecommendationSection;
+    based_on_high_rated?: RecommendationSection;
+  };
+  generated_at: string;
+  algorithm_version: string;
+}
+export interface RecommendationSections {
+  based_on_likes?: RecommendationSection;
+  based_on_last_liked?: RecommendationSection;
+  based_on_watched?: RecommendationSection;
+  based_on_last_watched?: RecommendationSection;
+  based_on_high_rated?: RecommendationSection;
+}

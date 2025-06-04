@@ -3,7 +3,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Any
 import numpy as np
-from backend.schemas import MovieFeatures
+from backend.schemas import MovieFeatures, RecommendationRequest,RatedMovie
 from backend.tmdb_client import tmdb_client
 
 class ContentBasedRecommender:
@@ -163,3 +163,84 @@ class ContentBasedRecommender:
         
         # Reutilizar el método existente
         return self.get_initial_recommendations(updated_profile, limit)
+    
+    # Añadir estos métodos a la clase ContentBasedRecommender
+
+    def get_recommendations_based_on_likes(self, liked_movies: List[int], limit: int = 5):
+        """Obtiene recomendaciones basadas en todas las películas que le gustan al usuario"""
+        if not liked_movies:
+            return []
+        return self.get_initial_recommendations(liked_movies, limit)
+
+    def get_recommendations_based_on_last_liked(self, last_liked_movie: int, limit: int = 5):
+        """Obtiene recomendaciones basadas en la última película que le gustó al usuario"""
+        return self.get_initial_recommendations([last_liked_movie], limit)
+
+    def get_recommendations_based_on_watched(self, watched_movies: List[int], limit: int = 5):
+        """Obtiene recomendaciones basadas en películas vistas"""
+        if not watched_movies:
+            return []
+        return self.get_initial_recommendations(watched_movies, limit)
+
+    def get_recommendations_based_on_last_watched(self, last_watched_movie: int, limit: int = 5):
+        """Obtiene recomendaciones basadas en la última película vista"""
+        return self.get_initial_recommendations([last_watched_movie], limit)
+
+    def get_recommendations_based_on_high_rated(self, rated_movies: List[RatedMovie], limit: int = 5):
+        """Obtiene recomendaciones basadas en películas con alta calificación"""
+        if not rated_movies:
+            return []
+        
+        # Encontrar la película con mayor rating
+        highest_rated = max(rated_movies, key=lambda x: x.rating)
+        return self.get_initial_recommendations([highest_rated.movie_id], limit)
+
+    def get_personalized_recommendations(self, request: RecommendationRequest):
+        """Genera todas las secciones de recomendaciones personalizadas"""
+        sections = {}
+        
+        # 1. Recomendaciones basadas en todas las películas que le gustan
+        if request.liked_movies:
+            sections["based_on_likes"] = {
+                "title": "Porque te gustan estas películas",
+                "movies": self.get_recommendations_based_on_likes(request.liked_movies, 5),
+                "reference_movies": request.liked_movies[:3]  # Tomamos las primeras 3 como referencia
+            }
+            
+            # 2. Recomendaciones basadas en la última película que le gustó
+            last_liked = request.liked_movies[-1] if request.liked_movies else None
+            if last_liked:
+                movie_details = self._get_movie_features(last_liked)
+                sections["based_on_last_liked"] = {
+                    "title": f"Porque te gustó {movie_details['title']}",
+                    "movies": self.get_recommendations_based_on_last_liked(last_liked, 5),
+                    "reference_movie": last_liked
+                }
+        
+        # 3. Recomendaciones basadas en películas vistas
+        if request.watched_movies:
+            sections["based_on_watched"] = {
+                "title": "Porque has visto estas películas",
+                "movies": self.get_recommendations_based_on_watched(request.watched_movies, 5),
+                "reference_movies": request.watched_movies[:3]
+            }
+            
+            # 4. Recomendaciones basadas en la última película vista
+            last_watched = request.watched_movies[-1] if request.watched_movies else None
+            if last_watched:
+                movie_details = self._get_movie_features(last_watched)
+                sections["based_on_last_watched"] = {
+                    "title": f"Porque viste {movie_details['title']}",
+                    "movies": self.get_recommendations_based_on_last_watched(last_watched, 5),
+                    "reference_movie": last_watched
+                }
+        
+        # 5. Recomendaciones basadas en películas con alta calificación
+        if request.rated_movies:
+            sections["based_on_high_rated"] = {
+                "title": "Porque te encantaron estas películas",
+                "movies": self.get_recommendations_based_on_high_rated(request.rated_movies, 5),
+                "reference_movies": [m.movie_id for m in sorted(request.rated_movies, key=lambda x: x.rating, reverse=True)[:3]]
+            }
+        
+        return sections
