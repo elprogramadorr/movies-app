@@ -391,7 +391,7 @@ const Home = () => {
         {/* SECCIONES PERSONALIZADAS */}
 
       
-        {/* 2. Porque te gustó [última película marcada como me gusta] */}
+        {/* 2. Porque te gustó [última película marcada como me gusta] AQUI TAMBIEN ES EL ERROR Y NO ME DA LA INFO DE LA PELICULA */}
         {recommendationSections.based_on_last_liked?.movies && recommendationSections.based_on_last_liked.movies.length > 0 &&(
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>
@@ -401,6 +401,7 @@ const Home = () => {
               horizontal
               data={recommendationSections.based_on_last_liked.movies}
               renderItem={({ item }) => (
+                console.log("Item de la sección basada en última película marcada como me gusta:", item.id), // DEBUGGING
                 <TouchableOpacity
                   onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
                 >
@@ -426,7 +427,7 @@ const Home = () => {
           </View>
         )}
 
-        {/*Peliculas de gustos inicial */}
+        {/*Peliculas de gustos inicial ESTO ME CARGA CORRECTAMENTE*/}
         {likedMovieTitle && similarMovies.length > 0 && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
@@ -435,6 +436,7 @@ const Home = () => {
               data={similarMovies}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
+                console.log("Item de películas similares:", item.id), // DEBUGGING
                 <TouchableOpacity
                   onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
                 >
@@ -470,6 +472,7 @@ const Home = () => {
                             return index.toString(); 
                           }}
             renderItem={({ item }) => (
+              console.log("Item de cartelera horizontal:", item.id), 
               <TouchableOpacity
                 onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
               >
@@ -489,7 +492,7 @@ const Home = () => {
           />
         </View>
 
-        {/* 4. Porque viste [última película vista] */}
+        {/* 4. Porque viste [última película vista] AQUI IGUAL ME SALE ERROR Y NO ME DEJA VER LA INFO DE LA PELICULA*/}
         {recommendationSections.based_on_last_watched?.movies && recommendationSections.based_on_last_watched.movies.length > 0 && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>
@@ -499,6 +502,7 @@ const Home = () => {
               horizontal
               data={recommendationSections.based_on_last_watched.movies}
               renderItem={({ item }) => (
+                console.log("Item de la sección basada en última vista:", item.id), // DEBUGGING
                 <TouchableOpacity
                   onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
                 >
@@ -524,7 +528,7 @@ const Home = () => {
           </View>
         )}
 
-        {/* 5. Porque te encantó [película mejor calificada] */}
+        {/* 5. Porque te encantó [película mejor calificada] CUANDO PRESIONO AQUI ME SALE ERROR Y NO ME DEJA VER LA INFO DE LA PELICULA */}
         {recommendationSections.based_on_high_rated?.movies && recommendationSections.based_on_high_rated.movies.length > 0 && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>
@@ -534,6 +538,7 @@ const Home = () => {
               horizontal
               data={recommendationSections.based_on_high_rated.movies}
               renderItem={({ item }) => (
+                 console.log("Item de películas mejor calificadas:", item.id),
                 <TouchableOpacity
                   onPress={() => navigation.navigate('MovieDetails', { movieId: item.id })}
                 >
@@ -559,7 +564,7 @@ const Home = () => {
           </View>
         )}
 
-        {/* Sección de categorías basadas en géneros seleccionados */}
+        {/* Sección de categorías basadas en géneros seleccionados AQUI NO ME CARGA NADA */}
         {categories.filter((cat: any) => selectedGenres.includes(cat.id)).map((category: any) => (
           <View key={category.id} style={styles.sectionContainer}>
             <View style={styles.categoryHeader}>
@@ -596,7 +601,7 @@ const Home = () => {
             />
           </View>
         ))}
-           {/* Lista de películas en grid */}
+           {/* Lista de películas en grid AQUI ME CARGA CORECTAMENTE LAS PELICULAS CUANDO ACCEDO A UNA PERO ME SALE LA MISMA PELICULA 2 VECES*/}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Todas tus recomendaciones</Text>
           <FlatList
