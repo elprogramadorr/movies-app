@@ -244,7 +244,7 @@ class ContentBasedRecommender:
             }
         
         return sections
-    def get_recommendationsPrueba(self, request: RecommendationRequest):
+    def get_recommendations(self, request: RecommendationRequest):
         """Genera recomendaciones personalizadas basadas en el perfil del usuario"""
         recommendations = request.selected_movies + request.liked_movies + request.watched_movies+ [rated_movie.movie_id for rated_movie in request.rated_movies]
         if not recommendations:
