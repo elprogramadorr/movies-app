@@ -54,7 +54,7 @@ const Home = () => {
   // Obtener parámetros de ruta
   const initialSelectedMovies = route.params?.selectedMovies || [];
   const initialSelectedGenres = route.params?.selectedGenres || [];
-  const selectedGenres = route.params?.selectedGenres || [];
+  const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [recommendationSections, setRecommendationSections] = useState<RecommendationSections>({});
 
   // Cargar categorías de películas
@@ -103,7 +103,7 @@ const Home = () => {
       if (userSnapshot.exists()) {
         const userData = userSnapshot.data();
         initialUserSelectedMovies = userData?.selectedMovies || [];
-        
+        setSelectedGenres(userData?.selectedGenres || []);
         // No necesitamos cargar likedMovies/watchedMovies/ratedMovies del documento principal
         // si los cargaremos de las subcolecciones, pero si quieres tener un fallback, puedes dejarlos.
         // Por ahora, nos enfocamos en las subcolecciones.
