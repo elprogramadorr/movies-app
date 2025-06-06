@@ -25,13 +25,14 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import NavBar from '../components/NavBar.tsx'; 
 
 
-import { fetchRecommendations, updateRecommendations, fetchPersonalizedRecommendations } from '../services/recommendationService';
+import { fetchRecommendations, updateRecommendations} from '../services/recommendationService';
 //import { fetchPopularMovies,fetchMovieById } from '../services/moviesServices';
 import { fetchMovieById, fetchSimilarMovies, fetchPopularMovies } from '../services/moviesServices';
 import { fetchGenres} from '../services/genresServices';
 import { fetchMoviesByGenres } from '../services/movieGenreService';
 import { Movie, RecommendationSections } from '../types';
 import CONFIG from '../config/config';
+import { set } from 'lodash';
 
 type Genre = { id: number; name: string };
 
@@ -50,10 +51,9 @@ const Home = () => {
   const [userLikes, setUserLikes] = useState<number[]>([]);
   const [recommendedMovies, setRecommendedMovies] = useState<Movie[]>([]);
   const [likedMovieTitle, setLikedMovieTitle] = useState<string | null>(null);
+  
 
   // Obtener parámetros de ruta
-  const initialSelectedMovies = route.params?.selectedMovies || [];
-  const initialSelectedGenres = route.params?.selectedGenres || [];
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [recommendationSections, setRecommendationSections] = useState<RecommendationSections>({});
 
@@ -144,9 +144,7 @@ const Home = () => {
       setSelectedMovies(initialUserSelectedMovies);
       // Combinar los likes iniciales con los de la lista 'me_gusta' para el backend
       setUserLikes([...new Set([...initialUserSelectedMovies, ...initialLikedMovies])]); 
-      // Setear los valores que se enviarán al backend en loadRecommendations
-      // Puedes guardar estos en un estado o pasarlos directamente
-      // Por simplicidad, los pasaremos directamente a loadRecommendations
+      
 
     } catch (error) {
       console.error('Error al obtener las películas seleccionadas o listas:', error);
@@ -154,8 +152,7 @@ const Home = () => {
       navigation.navigate('seleccionarGustos'); // Navegar si hay un error crítico
     } finally {
       setSelectedMoviesLoaded(true);
-      // Es crucial que loadRecommendations se llame aquí o después de asegurar que estos datos estén disponibles
-      // Si loadRecommendations depende de estos estados, el useEffect ya lo manejará
+      
     }
   };
 
@@ -368,18 +365,6 @@ const loadRecommendations = async () => {
       categoryName: category.name,
       movies: category.movies 
     });
-  };
-
-  // Manejar likes de películas
-  const handleLikeMovie = async (movieId: number) => {
-    try {
-      setUserLikes(prev => [...prev, movieId]);
-      const updatedRecs = await fetchRecommendations([...userLikes, movieId], { limit: 20 });
-      setRecommendedMovies(updatedRecs);
-    } catch (error) {
-      console.error('Error updating recommendations:', error);
-      setUserLikes(prev => prev.filter(id => id !== movieId));
-    }
   };
 
   // Efectos
@@ -626,6 +611,11 @@ const loadRecommendations = async () => {
             />
           </View>
         )}
+        {/* Sección "Tus recomendaciones" */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionText}>Categorias que te interesan</Text>
+          <View style={styles.sectionLine} />
+        </View>
 
         {/* Sección de categorías basadas en géneros seleccionados AQUI NO ME CARGA NADA */}
         {categories.filter((cat: any) => selectedGenres.includes(cat.id)).map((category: any) => (
@@ -668,7 +658,7 @@ const loadRecommendations = async () => {
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Todas tus recomendaciones</Text>
           <FlatList
-            data={movies.filter(
+            data={recommendedMovies.filter(
               (movie, index, self) => index === self.findIndex((m) => m.id === movie.id)
             )}
             keyExtractor={(item, index) => {
@@ -843,17 +833,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 14,
   },
-  loadingContainer: { // Agrega este estilo
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0A1B2A',
-  },
-  loadingText: { // Agrega este estilo
-    color: '#FFF',
-    fontSize: 18,
-    marginBottom: 20,
-  },
+ 
   /**Borrar despues */
   footerButton: {
     backgroundColor: '#007BFF',
