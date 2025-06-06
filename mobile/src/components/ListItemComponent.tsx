@@ -47,8 +47,8 @@ export const ListItemComponent = ({
   }, [item.peliculas]);
 
   const renderPlaceholderContent = () => {
-    if (moviePosters.length > 0) {
-      // Si hay posters, muestra un grid con las últimas 4 películas
+    if (moviePosters.length === 4) {
+      // Grid de 4 posters
       return (
         <View style={styles.movieGrid}>
           {moviePosters.map((poster, index) => (
@@ -60,8 +60,16 @@ export const ListItemComponent = ({
           ))}
         </View>
       );
+    } else if (moviePosters.length > 0) {
+      // Solo un poster grande
+      return (
+        <Image
+          source={{uri: moviePosters[0]}}
+          style={styles.image}
+        />
+      );
     } else {
-      // Si no hay posters, muestra la primera letra del título
+      // Placeholder con la letra
       return (
         <View style={styles.placeholderImage}>
           <Text style={styles.placeholderText}>

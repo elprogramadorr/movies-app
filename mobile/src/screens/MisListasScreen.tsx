@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  Image,
   TouchableOpacity,
 } from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -96,19 +95,22 @@ const MisListasScreen = () => {
           staticList => !firestoreTitles.includes(staticList.title),
         );
 
-        // Combina listas (las de Firestore y las estáticas que faltan)
-        const combinedLists = [...fetchedLists, ...staticListsToShow];
+        // Solo las listas dinámicas (no estáticas)
+        const dynamicLists = fetchedLists.filter(
+          list => !staticLists.some(staticList => staticList.title === list.title)
+        );
 
-        // Ordena: vistos, Favoritos, Ver más tarde, luego el resto
-        const order = ['vistos', 'Favoritos', 'Ver más tarde'];
-        combinedLists.sort((a, b) => {
-          const aIndex = order.indexOf(a.title);
-          const bIndex = order.indexOf(b.title);
-          if (aIndex === -1 && bIndex === -1) return 0;
-          if (aIndex === -1) return 1;
-          if (bIndex === -1) return -1;
-          return aIndex - bIndex;
-        });
+        // Ordena las dinámicas por fechaCreacion descendente
+        dynamicLists.sort((a, b) => (b.fechaCreacion || 0) - (a.fechaCreacion || 0));
+
+        // Combina: primero las estáticas que faltan, luego las de Firestore (autogeneradas y dinámicas)
+        const combinedLists = [
+          ...staticListsToShow,
+          ...fetchedLists.filter(list =>
+            staticLists.some(staticList => staticList.title === list.title)
+          ),
+          ...dynamicLists,
+        ];
 
         setFirebaseLists(combinedLists);
       },
