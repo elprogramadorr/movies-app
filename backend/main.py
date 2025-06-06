@@ -38,21 +38,22 @@ async def get_recommendations(request: RecommendationRequest):
         if not request.selected_movies:
             raise HTTPException(status_code=400, detail="No movies selected")
         
-        #recommendations = recommender.get_recommendations(
-        recommendations = recommender.get_initial_recommendations(
-            selected_movies=request.selected_movies,
-            limit=request.limit
-        )
-        personalized_sections = recommender.get_personalized_recommendations(request)
-        print(f"Secciones personalizadas generadas: {personalized_sections}") 
+        
+        #recommendations = recommender.get_initial_recommendations(
+         #   selected_movies=request.selected_movies,
+          #  limit=request.limit
+        #)
+        #personalized_sections = recommender.get_personalized_recommendations(request)
+        personalized_recommendations = recommender.get_recommendationsPrueba(request)
+        print(f"Secciones personalizadas generadas: {personalized_recommendations}") 
          # Validar que haya recomendaciones
-        if not recommendations and not personalized_sections: # Asegura que al menos algo se retorne
-            raise HTTPException(status_code=404, detail="No recommendations or sections found")
+        #if not recommendations and not personalized_recommendations: # Asegura que al menos algo se retorne
+         #   raise HTTPException(status_code=404, detail="No recommendations or sections found")
         
         # Formatear las recomendaciones
         return {
-            "recommendations": recommendations,
-            "sections": personalized_sections,
+            "recommendations": personalized_recommendations,
+            #"sections": personalized_sections,
             "generated_at": datetime.now().isoformat(),
             #"algorithm_version": "content-based-v2"
              "algorithm_version": "content-based-v3"

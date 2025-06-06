@@ -160,199 +160,186 @@ const Home = () => {
   };
 
   // Cargar recomendaciones de películas
- const loadRecommendations = async () => {
-    try {
-      setLoading(true);
-      await loadCategories();
+const loadRecommendations = async () => {
+  try {
+    setLoading(true);
+    await loadCategories();
 
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        console.warn('Usuario no autenticado, no se pueden cargar recomendaciones personalizadas.');
-        setLoading(false);
-        setInitialLoading(false);
-        return;
-      }
-
-      const firestore = getFirestore();
-      
-      // Obtener datos del usuario
-      const [userSnapshot, likedListSnapshot, watchedListSnapshot, ratingsSnapshot] = await Promise.all([
-        getDoc(doc(firestore, 'users', user.uid)),
-        getDoc(doc(firestore, 'users', user.uid, 'listas', 'me_gusta')),
-        getDoc(doc(firestore, 'users', user.uid, 'listas', 'vistos')),
-        getDocs(collection(firestore, 'users', user.uid, 'ratings'))
-      ]);
-
-      let currentSelectedMovies: number[] = [];
-      let currentLikedMovies: number[] = [];
-      let currentWatchedMovies: number[] = [];
-      let currentRatedMovies: Array<{movie_id: number, rating: number}> = [];
-
-      if (userSnapshot.exists()) {
-        currentSelectedMovies = userSnapshot.data()?.selectedMovies || [];
-      }
-
-      if (likedListSnapshot.exists()) {
-        currentLikedMovies = likedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
-      }
-
-      if (watchedListSnapshot.exists()) {
-        currentWatchedMovies = watchedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
-      }
-
-      currentRatedMovies = ratingsSnapshot.docs.map(doc => ({
-        movie_id: parseInt(doc.id),
-        rating: doc.data().rating
-      }));
-
-      // Determinar si el usuario es nuevo (sin interacciones)
-      const isNewUser = currentLikedMovies.length === 0 && 
-                        currentWatchedMovies.length === 0 && 
-                        currentRatedMovies.length === 0;
-
-      let allRecommendedMovies: Movie[] = [];
-      let sections: RecommendationSections = {};
-
-      if (isNewUser) {
-        // 1. Para usuarios nuevos: usar fetchRecommendations con gustos iniciales
-        const initialResponse = await fetchRecommendations(currentSelectedMovies, { limit: 20 });
-        allRecommendedMovies = [...initialResponse];
-        
-        // Obtener películas similares basadas en los gustos iniciales
-        if (currentSelectedMovies.length > 0) {
-          const similarMoviesPromises = currentSelectedMovies.map(movieId => 
-            fetchSimilarMovieService(movieId).then(res => res.results.slice(0, 5))
-          );
-          const similarMoviesArrays = await Promise.all(similarMoviesPromises);
-          const similarMovies = similarMoviesArrays.flat();
-          
-          // Agregar a las recomendaciones generales (eliminando duplicados)
-          allRecommendedMovies = [...allRecommendedMovies, ...similarMovies].filter(
-            (movie, index, self) => index === self.findIndex(m => m.id === movie.id)
-          );
-
-          // Crear sección "Porque te gustó" basada en los gustos iniciales
-          if (currentSelectedMovies[0]) {
-            const firstMovie = await fetchMovieById(currentSelectedMovies[0]);
-            setLikedMovieTitle(firstMovie.title);
-            
-            sections.based_on_last_liked = {
-              title: `Porque te gustó "${firstMovie.title}"`,
-              movies: similarMoviesArrays[0] // Primer conjunto de similares
-            };
-          }
-        }
-      } else {
-        // 2. Para usuarios existentes: usar fetchPersonalizedRecommendations
-        const personalizedResponse = await fetchPersonalizedRecommendations(
-          currentSelectedMovies,
-          currentLikedMovies,
-          currentWatchedMovies,
-          currentRatedMovies,
-          { limit: 20 }
-        );
-
-        allRecommendedMovies = personalizedResponse.recommendations || [];
-        sections = personalizedResponse.sections || {};
-
-        // Obtener recomendaciones adicionales basadas en la última película vista y la última likeada
-        const lastLikedMovie = currentLikedMovies[currentLikedMovies.length - 1];
-        const lastWatchedMovie = currentWatchedMovies[currentWatchedMovies.length - 1];
-
-        const recommendationsPromises = [];
-        
-        if (lastLikedMovie) {
-          recommendationsPromises.push(
-            fetchSimilarMovieService(lastLikedMovie)
-              .then(res => {
-                const movies = res.results.slice(0, 10);
-                sections.based_on_last_liked = {
-                  title: `Porque te gustó esta película`,
-                  movies: movies
-                };
-                return movies;
-              })
-          );
-        }
-
-        if (lastWatchedMovie && lastWatchedMovie !== lastLikedMovie) {
-          recommendationsPromises.push(
-            fetchSimilarMovieService(lastWatchedMovie)
-              .then(res => {
-                const movies = res.results.slice(0, 10);
-                sections.based_on_last_watched = {
-                  title: `Porque viste esta película`,
-                  movies: movies
-                };
-                return movies;
-              })
-          );
-        }
-
-        // Obtener recomendaciones basadas en la película mejor calificada
-        if (currentRatedMovies.length > 0) {
-          const highestRated = currentRatedMovies.reduce((prev, current) => 
-            (prev.rating > current.rating) ? prev : current
-          );
-          
-          recommendationsPromises.push(
-            fetchSimilarMovieService(highestRated.movie_id)
-              .then(res => {
-                const movies = res.results.slice(0, 10);
-                sections.based_on_high_rated = {
-                  title: `Porque te encantó esta película`,
-                  movies: movies
-                };
-                return movies;
-              })
-          );
-        }
-          // Obtener películas similares basadas en los gustos iniciales
-        if (currentSelectedMovies.length > 0) {
-          const similarMoviesPromises = currentSelectedMovies.map(movieId => 
-            fetchSimilarMovieService(movieId).then(res => res.results.slice(0, 5))
-          );
-          const similarMoviesArrays = await Promise.all(similarMoviesPromises);
-
-          // Crear sección "Porque te gustó" basada en los gustos iniciales
-          if (currentSelectedMovies[0]) {
-            const firstMovie = await fetchMovieById(currentSelectedMovies[0]);
-            setLikedMovieTitle(firstMovie.title);
-            
-          }
-        }
-
-        // Esperar todas las recomendaciones y agregarlas a allRecommendedMovies
-        const additionalRecommendations = await Promise.all(recommendationsPromises);
-        const flatAdditional = additionalRecommendations.flat();
-        
-        allRecommendedMovies = [
-          ...allRecommendedMovies,
-          ...flatAdditional
-        ].filter((movie, index, self) => 
-          index === self.findIndex(m => m.id === movie.id)
-        );
-      }
-      const fallbackMovies = await fetchPopularMovies();
-      // Actualizar estados
-      setRecommendedMovies(allRecommendedMovies);
-      setMovies(fallbackMovies);
-      setRecommendationSections(sections);
-      setUserLikes([...new Set([...currentLikedMovies, ...currentSelectedMovies])]);
-
-    } catch (error) {
-      console.error('Error al cargar recomendaciones:', error);
-      // Fallback a películas populares
-      const fallbackMovies = await fetchPopularMovies();
-      setMovies(fallbackMovies);
-      setRecommendedMovies(fallbackMovies);
-      setRecommendationSections({});
-    } finally {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      console.warn('Usuario no autenticado, no se pueden cargar recomendaciones personalizadas.');
       setLoading(false);
       setInitialLoading(false);
+      return;
     }
-  };
+
+    const firestore = getFirestore();
+    
+    // Obtener datos del usuario (optimizado con Promise.all)
+    const [userSnapshot, likedListSnapshot, watchedListSnapshot, ratingsSnapshot] = await Promise.all([
+      getDoc(doc(firestore, 'users', user.uid)),
+      getDoc(doc(firestore, 'users', user.uid, 'listas', 'me_gusta')),
+      getDoc(doc(firestore, 'users', user.uid, 'listas', 'vistos')),
+      getDocs(collection(firestore, 'users', user.uid, 'ratings'))
+    ]);
+
+
+    let currentSelectedMovies: number[] = [];
+    let currentLikedMovies: number[] = [];
+    let currentWatchedMovies: number[] = [];
+    let currentRatedMovies: Array<{movie_id: number, rating: number}> = [];
+
+    if (userSnapshot.exists()) {
+      currentSelectedMovies = userSnapshot.data()?.selectedMovies || [];
+    }
+
+    if (likedListSnapshot.exists()) {
+      currentLikedMovies = likedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
+    }
+
+    if (watchedListSnapshot.exists()) {
+      currentWatchedMovies = watchedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
+    }
+
+    currentRatedMovies = ratingsSnapshot.docs.map(doc => ({
+      movie_id: parseInt(doc.id),
+      rating: doc.data().rating
+    }));
+
+    // Determinar si el usuario es nuevo (sin interacciones)
+    const isNewUser = currentLikedMovies.length === 0 && 
+                      currentWatchedMovies.length === 0 && 
+                      currentRatedMovies.length === 0;
+
+    let allRecommendedMovies: Movie[] = [];
+    let sections: RecommendationSections = {};
+  
+    // 1. Siempre cargar recomendaciones basadas en preferencias iniciales (si existen)
+    if (currentSelectedMovies.length > 0) {
+      const initialSimilarMovies = await Promise.all(
+        currentSelectedMovies.map(movieId => 
+          fetchSimilarMovieService(movieId).then(res => res.results.slice(0, 5))
+        )
+      );
+      setSimilarMovies(initialSimilarMovies.flat().slice(0, 10));
+      
+      const firstMovie = await fetchMovieById(currentSelectedMovies[0]);
+      setLikedMovieTitle(firstMovie.title);
+
+      
+
+      // Agregar a todas las recomendaciones
+      allRecommendedMovies.push(...initialSimilarMovies.flat());
+    }
+
+    if (isNewUser) {
+      // 2. Para usuarios nuevos: cargar recomendaciones generales
+      const initialResponse = await fetchRecommendations(currentSelectedMovies, { limit: 20 });
+      allRecommendedMovies = [...allRecommendedMovies, ...initialResponse];
+      
+      
+    } else {
+      // 3. Para usuarios existentes: cargar recomendaciones personalizadas
+      const personalizedResponse = await updateRecommendations(
+        currentSelectedMovies,
+        currentLikedMovies,
+        currentWatchedMovies,
+        currentRatedMovies,
+        { limit: 20 }
+      );
+
+      allRecommendedMovies = [...personalizedResponse|| []];
+      
+
+      
+
+      // 5. Obtener recomendaciones basadas en interacciones recientes
+      const lastLikedMovie = currentLikedMovies[currentLikedMovies.length - 1];
+      const lastWatchedMovie = currentWatchedMovies[currentWatchedMovies.length - 1];
+      const lastLikedMovieDetails = await fetchMovieById(lastLikedMovie);
+      const lastWatchedMovieDetails = await fetchMovieById(lastWatchedMovie);
+
+      const recommendationsPromises = [];
+      
+      if (lastLikedMovie) {
+        recommendationsPromises.push(
+          fetchSimilarMovieService(lastLikedMovie)
+            .then(res => {
+              const movies = res.results.slice(0, 10);
+              sections.based_on_last_liked = {
+                title: `Porque te gustó esta película${lastLikedMovieDetails.title ? `: ${lastLikedMovieDetails.title}` : ''}`,
+                movies: movies
+              };
+              return movies;
+            })
+        );
+      }
+
+      if (lastWatchedMovie && lastWatchedMovie !== lastLikedMovie) {
+        recommendationsPromises.push(
+          fetchSimilarMovieService(lastWatchedMovie)
+            .then(res => {
+              const movies = res.results.slice(0, 10);
+              sections.based_on_last_watched = {
+                title: `Porque viste esta película ${lastWatchedMovieDetails.title ? `: ${lastWatchedMovieDetails.title}` : ''}`,
+                movies: movies
+              };
+              return movies;
+            })
+        );
+      }
+
+      if (currentRatedMovies.length > 0) {
+        const highestRated = currentRatedMovies.reduce((prev, current) => 
+          (prev.rating > current.rating) ? prev : current
+        );
+        const highestRatedMovie = await fetchMovieById(highestRated.movie_id);
+        
+        recommendationsPromises.push(
+          fetchSimilarMovieService(highestRated.movie_id)
+            .then(res => {
+              const movies = res.results.slice(0, 10);
+              sections.based_on_high_rated = {
+                title: `Porque te encantó esta película ${highestRatedMovie.title ? `: ${highestRatedMovie.title}` : ''}`,
+                movies: movies
+              };
+              return movies;
+            })
+        );
+      }
+
+      // Esperar y agregar recomendaciones adicionales
+      const additionalRecommendations = await Promise.all(recommendationsPromises);
+      allRecommendedMovies = [
+        ...allRecommendedMovies,
+        ...additionalRecommendations.flat()
+      ];
+    }
+
+    // Filtrar duplicados y actualizar estado
+    allRecommendedMovies = allRecommendedMovies.filter(
+      (movie, index, self) => index === self.findIndex(m => m.id === movie.id)
+    );
+     const fallbackMovies = await fetchPopularMovies();
+    // Actualizar estados
+    setRecommendedMovies(allRecommendedMovies);
+    setMovies(fallbackMovies);
+    setRecommendationSections(sections);
+    setUserLikes([...new Set([...currentLikedMovies, ...currentSelectedMovies])]);
+
+  } catch (error) {
+    console.error('Error al cargar recomendaciones:', error);
+    // Fallback a películas populares
+    const fallbackMovies = await fetchPopularMovies();
+    setMovies(fallbackMovies);
+    setRecommendedMovies(fallbackMovies);
+    setRecommendationSections({});
+  } finally {
+    setLoading(false);
+    setInitialLoading(false);
+  }
+};
 
   // Cargar películas similares
   const loadMovies = async () => {

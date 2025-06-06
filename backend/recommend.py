@@ -152,7 +152,7 @@ class ContentBasedRecommender:
         self,
         user_profile: List[int],  # Películas que le gustan al usuario
         new_interaction: int,     # Nueva película con la que interactuó
-        limit: int = 20
+        limit: int = 20 
         ):
         """Actualiza recomendaciones basadas en nueva interacción"""
         # Añadir la nueva película al perfil si no está ya
@@ -244,3 +244,31 @@ class ContentBasedRecommender:
             }
         
         return sections
+    def get_recommendationsPrueba(self, request: RecommendationRequest):
+        """Genera recomendaciones personalizadas basadas en el perfil del usuario"""
+        recommendations = request.selected_movies + request.liked_movies + request.watched_movies+ [rated_movie.movie_id for rated_movie in request.rated_movies]
+        if not recommendations:
+            return []
+        sorted_recommendations = self.get_initial_recommendations(recommendations, request.limit)
+        if not sorted_recommendations:
+            return []
+        # Aseguramos que las recomendaciones no incluyan películas ya vistas o seleccionadas
+        sorted_recommendations = [rec for rec in sorted_recommendations if rec["movie_id"] not in request.selected_movies and rec["movie_id"] not in request.watched_movies]
+        # Limitar el número de recomendaciones
+        if len(sorted_recommendations) > request.limit:
+            sorted_recommendations = sorted_recommendations[:request.limit]
+        # Retornar solo el número de recomendaciones solicitado
+        if len(sorted_recommendations) < request.limit:
+            print(f"Advertencia: Se solicitaron {request.limit} recomendaciones, pero solo se encontraron {len(sorted_recommendations)}.")
+        print(f"Recomendaciones generadas: {len(sorted_recommendations)}")
+        
+        # Aseguramos que las recomendaciones no incluyan películas ya vistas o seleccionadas
+        sorted_recommendations = [rec for rec in sorted_recommendations if rec["movie_id"] not in request.selected_movies and rec["movie_id"] not in request.watched_movies]
+        # Limitar el número de recomendaciones
+        if len(sorted_recommendations) > request.limit:
+            sorted_recommendations = sorted_recommendations[:request.limit]
+        # Retornar las recomendaciones ordenadas
+        sorted_recommendations.sort(key=lambda x: x["similarity_score"], reverse=True)
+        
+        
+        return sorted_recommendations[:request.limit]
