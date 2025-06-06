@@ -3,6 +3,7 @@ import {View, Text, FlatList, Image, TouchableOpacity} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styles from './ContenidoLista.styles';
 import {fetchMoviePosters} from '../../services/fetchMoviePosters';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
@@ -62,7 +63,7 @@ const ContenidoLista: React.FC = () => {
       {/* Encabezado */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>Atrás</Text>
+          <FontAwesome name="arrow-left" size={20} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>{nombreLista}</Text>
       </View>
