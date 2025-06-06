@@ -160,10 +160,10 @@ const Home = () => {
   };
 
   // Cargar recomendaciones de películas
-  const loadRecommendations = async () => {
+ const loadRecommendations = async () => {
     try {
-      setLoading(true); // Reiniciar loading al cargar recomendaciones
-      await loadCategories(); // Asegúrate de que esto no dependa de los likes para evitar bucles
+      setLoading(true);
+      await loadCategories();
 
       const auth = getAuth();
       const user = auth.currentUser;
@@ -175,13 +175,14 @@ const Home = () => {
       }
 
       const firestore = getFirestore();
-      const userDocRef = doc(firestore, 'users', user.uid);
-      const userSnapshot = await getDoc(userDocRef);
-
-      // --- OBTENER LAS LISTAS Y RATINGS ACTUALIZADAS DIRECTAMENTE AQUÍ ---
-      // Si fetchSelectedMovies ya los cargó en estados, puedes usar los estados.
-      // Si prefieres que loadRecommendations sea autocontenida, haz la carga aquí.
-      // Optaremos por hacer la carga aquí para que sea más robusto si los efectos se disparan diferente.
+      
+      // Obtener datos del usuario
+      const [userSnapshot, likedListSnapshot, watchedListSnapshot, ratingsSnapshot] = await Promise.all([
+        getDoc(doc(firestore, 'users', user.uid)),
+        getDoc(doc(firestore, 'users', user.uid, 'listas', 'me_gusta')),
+        getDoc(doc(firestore, 'users', user.uid, 'listas', 'vistos')),
+        getDocs(collection(firestore, 'users', user.uid, 'ratings'))
+      ]);
 
       let currentSelectedMovies: number[] = [];
       let currentLikedMovies: number[] = [];
@@ -189,88 +190,163 @@ const Home = () => {
       let currentRatedMovies: Array<{movie_id: number, rating: number}> = [];
 
       if (userSnapshot.exists()) {
-        const userData = userSnapshot.data();
-        currentSelectedMovies = userData?.selectedMovies || [];
+        currentSelectedMovies = userSnapshot.data()?.selectedMovies || [];
       }
 
-      const likedListRef = doc(firestore, 'users', user.uid, 'listas', 'me_gusta');
-      const likedListSnapshot = await getDoc(likedListRef);
       if (likedListSnapshot.exists()) {
         currentLikedMovies = likedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
       }
 
-      const watchedListRef = doc(firestore, 'users', user.uid, 'listas', 'vistos');
-      const watchedListSnapshot = await getDoc(watchedListRef);
       if (watchedListSnapshot.exists()) {
         currentWatchedMovies = watchedListSnapshot.data()?.peliculas?.map((id: string) => parseInt(id)) || [];
       }
 
-      const ratingsCollectionRef = collection(firestore, 'users', user.uid, 'ratings');
-      const ratingsSnapshot = await getDocs(ratingsCollectionRef);
       currentRatedMovies = ratingsSnapshot.docs.map(doc => ({
         movie_id: parseInt(doc.id),
         rating: doc.data().rating
       }));
-      // -------------------------------------------------------------------
 
-      // Obtener recomendaciones personalizadas
-      const personalizedResponse = await fetchPersonalizedRecommendations(
-        currentSelectedMovies, // Tus gustos iniciales
-        currentLikedMovies,    // Películas que le gustan de la lista
-        currentWatchedMovies,  // Películas vistas de la lista
-        currentRatedMovies,    // Películas calificadas
-        { limit: 20 }
-      );
-      
-      console.log("Respuesta de personalizedResponse:", personalizedResponse); // DEBUGGING
+      // Determinar si el usuario es nuevo (sin interacciones)
+      const isNewUser = currentLikedMovies.length === 0 && 
+                        currentWatchedMovies.length === 0 && 
+                        currentRatedMovies.length === 0;
 
-      // Obtener recomendaciones iniciales
-      const initialResponse = await fetchRecommendations(
-        currentSelectedMovies,
-        { limit: 20 }
-      );
+      let allRecommendedMovies: Movie[] = [];
+      let sections: RecommendationSections = {};
 
-      // Combinar y filtrar películas únicas
-      const allRecommendedMovies = [
-        ...(personalizedResponse.recommendations || []), // Asegúrate de que sea un array
-        ...initialResponse
-      ].filter(
-        (movie: Movie, index: number, self: Movie[]) =>
-          index === self.findIndex((m) => m.id === movie.id)
-      );
+      if (isNewUser) {
+        // 1. Para usuarios nuevos: usar fetchRecommendations con gustos iniciales
+        const initialResponse = await fetchRecommendations(currentSelectedMovies, { limit: 20 });
+        allRecommendedMovies = [...initialResponse];
+        
+        // Obtener películas similares basadas en los gustos iniciales
+        if (currentSelectedMovies.length > 0) {
+          const similarMoviesPromises = currentSelectedMovies.map(movieId => 
+            fetchSimilarMovieService(movieId).then(res => res.results.slice(0, 5))
+          );
+          const similarMoviesArrays = await Promise.all(similarMoviesPromises);
+          const similarMovies = similarMoviesArrays.flat();
+          
+          // Agregar a las recomendaciones generales (eliminando duplicados)
+          allRecommendedMovies = [...allRecommendedMovies, ...similarMovies].filter(
+            (movie, index, self) => index === self.findIndex(m => m.id === movie.id)
+          );
 
-      // Actualizar estados
-      setRecommendedMovies(allRecommendedMovies);
-      setMovies(allRecommendedMovies); // `movies` se usa en la FlatList de grid
-      setRecommendationSections(personalizedResponse.sections || {}); // ¡Aquí recibes las secciones!
-      setUserLikes([...new Set([...currentLikedMovies, ...currentSelectedMovies])]); // Para futuras actualizaciones
-
-      // Mantener la funcionalidad de películas similares (si aplica)
-      if (currentSelectedMovies.length > 0) {
-        const firstSelectedMovieId = currentSelectedMovies[0];
-        const similarMoviesData = await fetchSimilarMovieService(firstSelectedMovieId);
-        setSimilarMovies(similarMoviesData.results.slice(0, 10));
-
-        try {
-          const movieDetails = await fetchMovieById(firstSelectedMovieId);
-          setLikedMovieTitle(movieDetails.title);
-        } catch (error) {
-          console.error('Error al obtener detalles de la película:', error);
+          // Crear sección "Porque te gustó" basada en los gustos iniciales
+          if (currentSelectedMovies[0]) {
+            const firstMovie = await fetchMovieById(currentSelectedMovies[0]);
+            setLikedMovieTitle(firstMovie.title);
+            
+            sections.based_on_last_liked = {
+              title: `Porque te gustó "${firstMovie.title}"`,
+              movies: similarMoviesArrays[0] // Primer conjunto de similares
+            };
+          }
         }
       } else {
-          setSimilarMovies([]); // Limpiar si no hay seleccionadas iniciales
-          setLikedMovieTitle(null);
+        // 2. Para usuarios existentes: usar fetchPersonalizedRecommendations
+        const personalizedResponse = await fetchPersonalizedRecommendations(
+          currentSelectedMovies,
+          currentLikedMovies,
+          currentWatchedMovies,
+          currentRatedMovies,
+          { limit: 20 }
+        );
+
+        allRecommendedMovies = personalizedResponse.recommendations || [];
+        sections = personalizedResponse.sections || {};
+
+        // Obtener recomendaciones adicionales basadas en la última película vista y la última likeada
+        const lastLikedMovie = currentLikedMovies[currentLikedMovies.length - 1];
+        const lastWatchedMovie = currentWatchedMovies[currentWatchedMovies.length - 1];
+
+        const recommendationsPromises = [];
+        
+        if (lastLikedMovie) {
+          recommendationsPromises.push(
+            fetchSimilarMovieService(lastLikedMovie)
+              .then(res => {
+                const movies = res.results.slice(0, 10);
+                sections.based_on_last_liked = {
+                  title: `Porque te gustó esta película`,
+                  movies: movies
+                };
+                return movies;
+              })
+          );
+        }
+
+        if (lastWatchedMovie && lastWatchedMovie !== lastLikedMovie) {
+          recommendationsPromises.push(
+            fetchSimilarMovieService(lastWatchedMovie)
+              .then(res => {
+                const movies = res.results.slice(0, 10);
+                sections.based_on_last_watched = {
+                  title: `Porque viste esta película`,
+                  movies: movies
+                };
+                return movies;
+              })
+          );
+        }
+
+        // Obtener recomendaciones basadas en la película mejor calificada
+        if (currentRatedMovies.length > 0) {
+          const highestRated = currentRatedMovies.reduce((prev, current) => 
+            (prev.rating > current.rating) ? prev : current
+          );
+          
+          recommendationsPromises.push(
+            fetchSimilarMovieService(highestRated.movie_id)
+              .then(res => {
+                const movies = res.results.slice(0, 10);
+                sections.based_on_high_rated = {
+                  title: `Porque te encantó esta película`,
+                  movies: movies
+                };
+                return movies;
+              })
+          );
+        }
+          // Obtener películas similares basadas en los gustos iniciales
+        if (currentSelectedMovies.length > 0) {
+          const similarMoviesPromises = currentSelectedMovies.map(movieId => 
+            fetchSimilarMovieService(movieId).then(res => res.results.slice(0, 5))
+          );
+          const similarMoviesArrays = await Promise.all(similarMoviesPromises);
+
+          // Crear sección "Porque te gustó" basada en los gustos iniciales
+          if (currentSelectedMovies[0]) {
+            const firstMovie = await fetchMovieById(currentSelectedMovies[0]);
+            setLikedMovieTitle(firstMovie.title);
+            
+          }
+        }
+
+        // Esperar todas las recomendaciones y agregarlas a allRecommendedMovies
+        const additionalRecommendations = await Promise.all(recommendationsPromises);
+        const flatAdditional = additionalRecommendations.flat();
+        
+        allRecommendedMovies = [
+          ...allRecommendedMovies,
+          ...flatAdditional
+        ].filter((movie, index, self) => 
+          index === self.findIndex(m => m.id === movie.id)
+        );
       }
+      const fallbackMovies = await fetchPopularMovies();
+      // Actualizar estados
+      setRecommendedMovies(allRecommendedMovies);
+      setMovies(fallbackMovies);
+      setRecommendationSections(sections);
+      setUserLikes([...new Set([...currentLikedMovies, ...currentSelectedMovies])]);
 
     } catch (error) {
       console.error('Error al cargar recomendaciones:', error);
-      Alert.alert('Error', 'No se pudieron cargar las recomendaciones.');
-      // Fallback a películas populares si hay un error en la personalización
+      // Fallback a películas populares
       const fallbackMovies = await fetchPopularMovies();
       setMovies(fallbackMovies);
       setRecommendedMovies(fallbackMovies);
-      setSimilarMovies([]);
-      setLikedMovieTitle(null);
       setRecommendationSections({});
     } finally {
       setLoading(false);
@@ -391,8 +467,8 @@ const Home = () => {
         {/* SECCIONES PERSONALIZADAS */}
 
       
-        {/* 2. Porque te gustó [última película marcada como me gusta] AQUI TAMBIEN ES EL ERROR Y NO ME DA LA INFO DE LA PELICULA */}
-        {recommendationSections.based_on_last_liked?.movies && recommendationSections.based_on_last_liked.movies.length > 0 &&(
+        {/* 2. Porque te gustó [última película marcada como me gusta]  */}
+        {recommendationSections.based_on_last_liked?.movies &&(
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>
               {recommendationSections.based_on_last_liked.title || "Porque te gustó esta película"}
@@ -427,7 +503,7 @@ const Home = () => {
           </View>
         )}
 
-        {/*Peliculas de gustos inicial ESTO ME CARGA CORRECTAMENTE*/}
+        {/*Peliculas de gustos inicial */}
         {likedMovieTitle && similarMovies.length > 0 && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Porque te gustó "{likedMovieTitle}"</Text>
@@ -492,8 +568,8 @@ const Home = () => {
           />
         </View>
 
-        {/* 4. Porque viste [última película vista] AQUI IGUAL ME SALE ERROR Y NO ME DEJA VER LA INFO DE LA PELICULA*/}
-        {recommendationSections.based_on_last_watched?.movies && recommendationSections.based_on_last_watched.movies.length > 0 && (
+        {/* 4. Porque viste [última película vista] */}
+        {recommendationSections.based_on_last_watched?.movies && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>
               {recommendationSections.based_on_last_watched.title || "Porque viste esta película"}
@@ -529,7 +605,7 @@ const Home = () => {
         )}
 
         {/* 5. Porque te encantó [película mejor calificada] CUANDO PRESIONO AQUI ME SALE ERROR Y NO ME DEJA VER LA INFO DE LA PELICULA */}
-        {recommendationSections.based_on_high_rated?.movies && recommendationSections.based_on_high_rated.movies.length > 0 && (
+        {recommendationSections.based_on_high_rated?.movies && (
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>
               {recommendationSections.based_on_high_rated.title || "Porque te encantaron estas películas"}
@@ -601,7 +677,7 @@ const Home = () => {
             />
           </View>
         ))}
-           {/* Lista de películas en grid AQUI ME CARGA CORECTAMENTE LAS PELICULAS CUANDO ACCEDO A UNA PERO ME SALE LA MISMA PELICULA 2 VECES*/}
+           {/* Lista de películas en grid */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Todas tus recomendaciones</Text>
           <FlatList

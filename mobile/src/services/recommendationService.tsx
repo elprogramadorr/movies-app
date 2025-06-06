@@ -1,5 +1,5 @@
 import CONFIG from '../config/config';
-import { Movie, RecommendationResponse } from '../types';
+import { Movie, RecommendationResponse,RecommendationSection } from '../types';
 
 interface RecommendationRequest {
         selected_movies: number[];
