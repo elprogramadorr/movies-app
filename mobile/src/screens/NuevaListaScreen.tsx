@@ -13,7 +13,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../types.ts';
-import {collection, doc, setDoc, serverTimestamp} from 'firebase/firestore';
+import {collection, doc, setDoc, serverTimestamp, query, where, getDocs} from 'firebase/firestore';
 import {db} from '../../android/app/src/config/firebaseConfig';
 import {Image} from 'react-native';
 import {useAuthStore} from '../store/useAuthStore';
@@ -67,10 +67,21 @@ const NuevaListaScreen = () => {
         Alert.alert('Error', 'Usuario no autenticado');
         return;
       }
+      const listasRef = collection(db, 'users', user.uid, 'listas');
+      const q = query(listasRef, where('nombreLista', '==', title.trim()));
+      const querySnapshot = await getDocs(q);
 
-      const userId = user.uid;
+      if(title.trim() == "Ver más tarde" || title.trim() == "Favoritos" || title.trim() == "Vistos" || title.trim() == "vistos") {
+        setTitleError('No puedes usar ese nombre para una lista personalizada');
+        setLoading(false);
+        return;
+      }
 
-      console.log('userID ', userId);
+      if (!querySnapshot.empty) {
+        setTitleError('Ya existe una lista con ese nombre');
+        setLoading(false);
+        return;
+      }
 
       const docRef = doc(collection(db, 'users', user.uid, 'listas'));
       await setDoc(docRef, {
