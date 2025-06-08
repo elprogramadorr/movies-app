@@ -19,14 +19,19 @@ import { db } from '../../android/app/src/config/firebaseConfig';
 
 interface Props {
   onItemPress: (item: string) => void;
-}
+  userId: string;
+} 
 
-const HistorialBusqueda: React.FC<Props> = ({ onItemPress }) => {
+const HistorialBusqueda: React.FC<Props> = ({ onItemPress , userId}) => {
   const [historial, setHistorial] = useState<string[]>([]);
 
-  const cargarHistorial = async () => {
+  const cargarHistorial = async (userId: string) => {
     try {
-      const q = query(collection(db, 'busqueda'), orderBy('fecha', 'desc'));
+      // Cambia la colección a la subcolección del usuario
+      const q = query(
+        collection(db, 'users', userId, 'busqueda'),
+        orderBy('fecha', 'desc')
+      );
       const querySnapshot = await getDocs(q);
       const resultados: string[] = [];
 
@@ -45,14 +50,17 @@ const HistorialBusqueda: React.FC<Props> = ({ onItemPress }) => {
 
   const eliminarBusqueda = async (busqueda: string) => {
     try {
-      const q = query(collection(db, 'busqueda'), where('busqueda', '==', busqueda));
+      const q = query(
+        collection(db, 'users', userId, 'busqueda'),
+        where('busqueda', '==', busqueda)
+      );
       const snapshot = await getDocs(q);
 
-      snapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+      snapshot.forEach(async (docu) => {
+        await deleteDoc(docu.ref);
       });
 
-      cargarHistorial(); // recarga las búsquedas después de eliminar
+      cargarHistorial(userId); // recarga las búsquedas después de eliminar
     } catch (error) {
       console.error('Error eliminando búsqueda:', error);
     }
@@ -74,8 +82,8 @@ const HistorialBusqueda: React.FC<Props> = ({ onItemPress }) => {
   };
 
   useEffect(() => {
-    cargarHistorial();
-  }, []);
+    if (userId) cargarHistorial(userId);
+  }, [userId]);
 
   const renderItem = ({ item }: { item: string }) => (
     <TouchableOpacity
