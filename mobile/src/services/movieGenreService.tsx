@@ -21,7 +21,6 @@ export const fetchMoviesByGenres = async (genreIds: number[], language: string =
         }
 
         const data = await response.json();
-        console.log('Películas cargadas:', data); // Muestra las películas cargadas en la consola
         return data;
     } catch (error) {
         console.error('Error al cargar las películas:', error);

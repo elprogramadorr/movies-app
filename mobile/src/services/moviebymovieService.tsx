@@ -17,7 +17,6 @@ export const fetchSimilarMovies = async (movieId: number, language: string = 'es
         }
 
         const data = await response.json();
-        console.log('Películas similares cargadas:', data);
         return data;
     } catch (error) {
         console.error('Error al cargar las películas similares:', error);
