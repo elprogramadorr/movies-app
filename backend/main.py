@@ -3,10 +3,9 @@ from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-from backend.recommend import ContentBasedRecommender
-from backend.tmdb_client import tmdb_client
-from backend.schemas import RecommendationRequest, RecommendationResponse
-
+from recommend import ContentBasedRecommender
+from tmdb_client import tmdb_client
+from schemas import RecommendationRequest, RecommendationResponse
 app = FastAPI()
 
 # Configura CORS
