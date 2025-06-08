@@ -3,8 +3,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import List, Dict, Any
 import numpy as np
-from backend.schemas import MovieFeatures, RecommendationRequest,RatedMovie
-from backend.tmdb_client import tmdb_client
+from schemas import MovieFeatures, RecommendationRequest,RatedMovie
+from tmdb_client import tmdb_client
 
 class ContentBasedRecommender:
     """Recomendador basado en contenido para películas usando TMDB."""
