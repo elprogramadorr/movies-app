@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  FlatList,
   TextInput,
   Button,
   Alert,
@@ -55,10 +54,20 @@ const Review: React.FC<Props> = ({movieId, isWatched}) => {
   const sendingRef = useRef(false);
   const [showAll, setShowAll] = useState(false);
   const navigation = useNavigation();
+  const [nameUser, setNameUser] = useState<string | null>(null);
+  const userReviews = reviews.filter(r => r.uid !== 'sistema');
+  const showSystemReview = userReviews.length === 0 && reviews.some(r => r.uid === 'sistema');
+  const reviewsToShow = showSystemReview ? reviews : userReviews;
 
   useEffect(() => {
     if (!movieId) return;
-
+    const checkUserName = async () => {
+      if (user) {
+        setNameUser(user.displayName || 'Usuario');
+      } else {
+        setNameUser(null);
+      }
+    }
     const checkAndCreateReview = async () => {
       try {
         const movieDocRef = doc(db, 'review', String(movieId));
@@ -87,6 +96,7 @@ const Review: React.FC<Props> = ({movieId, isWatched}) => {
     };
 
     checkAndCreateReview();
+    checkUserName();
   }, [movieId]);
 
   // Verifica si el usuario ya escribió una reseña
@@ -173,7 +183,7 @@ const Review: React.FC<Props> = ({movieId, isWatched}) => {
     try {
       const reviewsRef = collection(db, 'review', String(movieId), 'usuarios');
       await addDoc(reviewsRef, {
-        usuario: user.displayName || 'Usuario',
+        usuario: nameUser,
         review: myReview,
         fecha: serverTimestamp(),
         photoURL: user.photoURL || null,
@@ -246,11 +256,11 @@ const Review: React.FC<Props> = ({movieId, isWatched}) => {
           Ya has escrito una reseña para esta película.
         </Text>
       )}
-      {reviews.length === 0 ? (
+      {reviewsToShow.length === 0 ? (
         <Text style={styles.noReviews}>No hay reseñas aún.</Text>
       ) : (
         <>
-          {(showAll ? reviews : reviews.slice(0, 5)).map(item => (
+          {(showAll ? reviewsToShow : reviewsToShow.slice(0, 5)).map(item => (
             <View key={item.id} style={styles.reviewItem}>
               <TouchableOpacity
                 onPress={() => {
@@ -282,7 +292,7 @@ const Review: React.FC<Props> = ({movieId, isWatched}) => {
               </Text>
             </View>
           ))}
-          {reviews.length > 5 && !showAll && (
+          {reviewsToShow.length > 5 && !showAll && (
             <Text
               style={{
                 color: '#E7A325',
@@ -294,7 +304,7 @@ const Review: React.FC<Props> = ({movieId, isWatched}) => {
               Ver más reseñas
             </Text>
           )}
-          {showAll && reviews.length > 5 && (
+          {showAll && reviewsToShow.length > 5 && (
             <Text
               style={{
                 color: '#E7A325',

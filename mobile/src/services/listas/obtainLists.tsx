@@ -17,6 +17,7 @@ export const obtainLists = async (userID: string): Promise<any[]> => {
         fechaCreacion: new Date(),
         description: 'Películas guardadas para ver luego',
         nombreLista: 'Ver más tarde',
+        privada: true,
       });
       querySnapshot = await getDocs(listasRef);
     }

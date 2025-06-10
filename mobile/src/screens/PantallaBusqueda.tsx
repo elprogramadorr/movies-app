@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import {useAuthStore} from '../store/useAuthStore';
 
 interface Movie {
   id: number;
@@ -39,11 +40,13 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 const SearchScreen = () => {
+  const user = useAuthStore(state => state.user);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [query, setQuery] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [actors, setActors] = useState<Person[]>([]);
   const [directors, setDirectors] = useState<Person[]>([]);
+
 
   const searchAll = async (text: string) => {
     const trimmed = text.trim().toLowerCase();
@@ -94,8 +97,17 @@ const SearchScreen = () => {
     const trimmed = term.trim();
     if (!trimmed) return;
 
+    if (!user) {
+      console.warn('Usuario no autenticado, no se guardará la búsqueda');
+      return;
+    }
+    const userId = user.uid; // Asegúrate de que el usuario tenga un ID único
+    if (!userId) {
+      console.warn('Usuario sin ID, no se guardará la búsqueda');
+      return;
+    }
     try {
-      await addDoc(collection(db, 'busqueda'), {
+      await addDoc(collection(db, 'users', userId, 'busqueda'), {
         busqueda: trimmed,
         fecha: serverTimestamp(),
       });
@@ -176,6 +188,7 @@ const SearchScreen = () => {
               searchAll(item);
               saveSearchToFirebase(item);
             }}
+            userId={user.uid }
           />
         )}
 
