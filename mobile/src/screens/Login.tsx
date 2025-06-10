@@ -102,7 +102,7 @@ const Login = () => {
           <Image source={require('../assets/Logo.png')} style={styles.logo} />
         </View>
 
-        <Text style={styles.title}>!Bienvenido a Holo!</Text>
+        <Text style={styles.title}>¡Bienvenido a Holo!</Text>
         <Text style={styles.subtitle}>Tu nueva experiencia de películas</Text>
 
         <View style={styles.loginContainer}>
